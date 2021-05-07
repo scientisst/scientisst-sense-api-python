@@ -38,4 +38,4 @@ Dependencies:
 python plot_output.py
 ```
 
-![Example ECG](https://raw.githubusercontent.com/scientisst/scientisst-sense-api-py/master/example-plot.png)
+![Example ECG](https://raw.githubusercontent.com/scientisst/scientisst-sense-api-py/main/example-plot.png)
