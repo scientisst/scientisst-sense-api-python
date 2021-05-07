@@ -17,7 +17,7 @@ if __name__ == "__main__":
     if fs == 1:
         num_frames = 1
     else:
-        num_frames = fs / 5
+        num_frames = fs // 5
     try:
         while True:
             frames = scientisst.read(num_frames)

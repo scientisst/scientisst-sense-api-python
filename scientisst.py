@@ -154,7 +154,6 @@ class ScientISST:
         self.__initFile(file_name)
 
     def read(self, num_frames):
-        num_frames = int(num_frames)
         bf = [None] * self.__packet_size
 
         # unsigned char buffer[500]
