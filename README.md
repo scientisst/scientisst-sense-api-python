@@ -1,4 +1,4 @@
-# scientisst-sense-api-py
+# scientisst-sense-api-python
 
 The ScientISST SENSE Python API
 
@@ -16,13 +16,13 @@ pip install PyBluez
 
 ```sh
 # Getting this repository 
-git clone https://github.com/scientisst/scientisst-sense-api-py.git
+git clone https://github.com/scientisst/scientisst-sense-api-python.git
 ```
 
 ## Running
 
 ```sh
-cd scientisst-sense-api-py
+cd scientisst-sense-api-python
 # Example usage
 python main.py 
 ```
