@@ -2,8 +2,9 @@ import bluetooth
 import time
 from math import log2
 
-TIMEOUT_IN_SECONDS = 3
+import frame, state
 
+TIMEOUT_IN_SECONDS = 3
 
 # API_MODE
 API_MODE_BITALINO = 1
@@ -20,34 +21,49 @@ AI6 = 6
 AX1 = 7
 AX2 = 8
 
-class Frame:
-    digital = [0] * 4
-    seq = None
-    a = [0] * 8
-
-    def toMap(self):
-        return {"sequence": self.seq, "analog": self.a, "digital": self.digital}
-
-    def toString(self):
-        return str(self.toMap())
 
 def find():
+    """
+    Searches for Bluetooth devices in range.
+
+    Parameters
+    ----------
+    void
+
+    Returns
+    -------
+    devices : array
+        List of found devices addresses
+    """
+
     nearby_devices = bluetooth.discover_devices(lookup_names=True)
 
     c = 0
+    devices = []
     for addr, name in nearby_devices:
         if "scientisst" in name.lower():
+            devices += [addr]
             if c == 0:
                 "Devices found:"
             c += 1
             print("{} - {}".format(addr, name))
     if c == 0:
         print("Found no devices")
+    return devices
 
 
 class ScientISST:
-    port = 1
-    sock = None
+    """
+    ScientISST Device class
+
+    Parameters
+    ----------
+    address : String
+        The device Bluetooth MAC address ("xx:xx:xx:xx:xx:xx")
+    """
+
+    __port = 1
+    __sock = None
     __num_chs = 0
     __api_mode = 1
     __sample_rate = None
@@ -56,20 +72,29 @@ class ScientISST:
 
     def __init__(self, address):
         self.address = address
-
-    def connect(self):
-
         # Close socket if it exists
-        if self.sock:
+        if self.__sock:
             self.disconnect()
 
         print("Connecting to device...")
         # Create the client socket
-        self.sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        self.sock.connect((self.address, self.port))
+        self.__sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+        self.__sock.connect((self.address, self.__port))
         print("Connected!")
 
     def version(self):
+        """
+        Gets the device firmware version string
+
+        Parameters
+        ----------
+        void
+
+        Returns
+        -------
+        version : string
+            Firmware version
+        """
         header = "ScientISST"
         headerLen = len(header)
 
@@ -96,10 +121,31 @@ class ScientISST:
                 return
 
         print("ScientISST version: {}".format(version))
+        return version
 
     def start(
-        self, sample_rate, channels, file_name, simulated, api=API_MODE_SCIENTISST
+        self, sample_rate, channels, file_name, simulated=False, api=API_MODE_SCIENTISST
     ):
+        """
+        Starts a signal acquisition from the device.
+
+        Parameters
+        ----------
+        sample_rate : int
+            Sampling rate in Hz. Accepted values are 1, 10, 100 or 1000 Hz.
+        channels : array
+            Set of channels to acquire. Accepted channels are 0...5 for inputs A1...A6.
+        file_name : string
+            Name of the file where the live mode data will be written into.
+        simulated : bool
+            If true, start in simulated mode. Otherwise start in live mode. Default is to start in live mode.
+        api : int
+            The API mode, this API supports the ScientISST and JSON APIs.
+
+        Returns
+        -------
+        void
+        """
         if self.__num_chs != 0:
             print("Device not idle")
             return
@@ -113,7 +159,7 @@ class ScientISST:
         self.__num_chs = 0
 
         # Change API mode
-        self.changeAPI(api)
+        self.__changeAPI(api)
 
         # Sample rate
         sr = 0b01000011
@@ -154,6 +200,21 @@ class ScientISST:
         self.__initFile(file_name)
 
     def read(self, num_frames):
+        """
+        Reads acquisition frames from the device.
+        This method returns when all requested frames are received from the device, or when a timeout occurs.
+
+        Parameters
+        ----------
+        num_frames : int
+           Number of frames to retrieve from the device
+
+        Returns
+        -------
+        frames : array
+            List of Frame objects retrieved from the device
+        """
+
         bf = [None] * self.__packet_size
 
         # unsigned char buffer[500]
@@ -244,6 +305,17 @@ class ScientISST:
         return frames
 
     def stop(self):
+        """
+        Stops a signal acquisition.
+
+        Parameters
+        ----------
+        void
+
+        Returns
+        -------
+        void
+        """
         if self.__num_chs == 0:
             print("Device not in acquisition mode")
             return
@@ -259,6 +331,147 @@ class ScientISST:
 
         # fclose(output_fd);
         self.__f.close()
+
+    def battery(self, value=0):
+        """
+        Sets the battery voltage threshold for the low-battery LED.
+
+        Parameters
+        ----------
+        value : int
+            Battery voltage threshold. Default value is 0.
+            Value | Voltage Threshold
+            ----- | -----------------
+                0 |   3.4 V
+             ...  |   ...
+               63 |   3.8 V
+
+        Returns
+        -------
+        void
+        """
+        if self.__num_chs != 0:
+            print("Device is not idle")
+            return
+
+        if value < 0 or value > 63:
+            print("Invalid parameter")
+            return
+
+        cmd = value << 2
+        # <bat threshold> 0 0 - Set battery threshold
+        self.__send(cmd)
+
+    def trigger(self, digital_output):
+        """
+        Assigns the digital outputs states.
+
+        Parameters
+        ----------
+        digital_output : array
+            Vector of booleans to assign to digital outputs, starting at first output (O1).
+
+        Returns
+        -------
+        void
+        """
+        length = len(digital_output)
+
+        if len != 2:
+            print("Invalid parameter")
+            return
+
+        cmd = 0xB3  # 1  0  1  1  O2 O1 1  1 - Set digital outputs
+
+        for i in range(length):
+            if digital_output[i]:
+                cmd |= 0b100 << i
+
+        self.__send(cmd)
+
+    def dac(self, pwm_output):
+        """
+        Assigns the analog (PWM) output value (%ScientISST 2 only).
+
+        Parameters
+        ----------
+        pwm_output : array
+            Analog output value to set (0...255).
+
+        Returns
+        -------
+        void
+        """
+        if pwm_output < 0 or pwm_output > 255:
+            print("Invalid parameter")
+            return
+
+        cmd = 0xA3  # 1  0  1  0  0  0  1  1 - Set dac output
+
+        cmd |= pwm_output << 8
+        self.__send(cmd)
+
+    # TODO: test with ScientISST Sense v2
+    def state(self):
+        """
+        Returns current device state (%ScientISST 2 only).
+
+        Parameters
+        ----------
+        void
+
+        Returns
+        -------
+        state : State
+            Current device state
+        """
+        if self.__num_chs != 0:
+            print("Device not idle")
+            return
+
+        cmd = 0x0B
+        self.__send(cmd)
+        # 0  0  0  0  1  0  1  1 - Send device status
+
+        # if (recv(&statex, sizeof statex) != sizeof statex)    # a timeout has occurred
+        # throw Exception(Exception::CONTACTING_DEVICE);
+        result = self.__recv(16)
+        if not result or not self.__checkCRC4(result, 16):
+            print("A timeout has occurred")
+            return
+
+        state = State()
+        print(result)
+
+        # for(int i = 0; i < 6; i++)
+        # state.analog[i] = statex.analog[i];
+
+        # state.battery = statex.battery;
+        # state.batThreshold = statex.batThreshold;
+
+        # for(int i = 0; i < 4; i++)
+        # state.digital[i] = ((statex.portsCRC & (0x80 >> i)) != 0);
+
+        # return state;
+
+    def disconnect(self):
+        """
+        Disconnects from a %ScientISST device. If an aquisition is running, it is stopped.
+
+        Parameters
+        ----------
+        void
+
+        Returns
+        -------
+        void
+        """
+        if self.__num_chs != 0:
+            self.stop()
+        self.__sock.close()
+        self.__sock = None
+        print("Disconnected")
+
 
     def __getPacketSize(self):
         packet_size = 0
@@ -364,12 +577,7 @@ class ScientISST:
                 self.__f.write("{}, ".format(f.a[self.__chs[i] - 1]))
         self.__f.write("\n")
 
-    def disconnect(self):
-        self.sock.close()
-        self.sock = None
-        print("Disconnected")
-
-    def changeAPI(self, api):
+    def __changeAPI(self, api):
         if self.__num_chs and self.__num_chs != 0:
             print("Device not idle")
 
@@ -398,6 +606,9 @@ class ScientISST:
         return crc == (data[length - 1] & 0x0F)
 
     def __send(self, command):
+        """
+        Send data
+        """
         if type(command) is int:
             if command != 0:
                 command = command.to_bytes(
@@ -405,24 +616,30 @@ class ScientISST:
                 )
             else:
                 command = b"\x00"
-        if self.sock:
+        if self.__sock:
             time.sleep(0.150)
             # print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
-            self.sock.send(command)
+            self.__sock.send(command)
         else:
             raise AttributeError("No device connected")
 
     def __recv(self, nrOfBytes):
+        """
+        Receive data
+        """
         result = None
-        self.sock.settimeout(TIMEOUT_IN_SECONDS)
+        self.__sock.settimeout(TIMEOUT_IN_SECONDS)
         try:
-            result = self.sock.recv(nrOfBytes)
+            result = self.__sock.recv(nrOfBytes)
             pass
         except bluetooth.btcommon.BluetoothError:
             pass
-        self.sock.settimeout(None)
+        self.__sock.settimeout(None)
         return result
 
     def __clear(self):
+        """
+        Clear the device buffer
+        """
         while self.__recv(1):
             pass

@@ -10,20 +10,20 @@ if __name__ == "__main__":
     scientisst.connect()
     scientisst.version()
 
-    fs = 5000
-    scientisst.start(fs, [AI3], "output.csv", False, API_MODE_SCIENTISST)
-    print("Start acquisition")
+    scientisst.state()
+    # fs = 5000
+    # scientisst.start(fs, [AI3], "output.csv", False, API_MODE_SCIENTISST)
+    # print("Start acquisition")
 
-    if fs == 1:
-        num_frames = 1
-    else:
-        num_frames = fs // 5
-    try:
-        while True:
-            frames = scientisst.read(num_frames)
-            print([frames[0].seq] + frames[0].digital + frames[0].a)
-    except KeyboardInterrupt:
-        print("Stop acquisition")
-        scientisst.stop()
-        scientisst.disconnect()
-        sys.exit(0)
+    # if fs == 1:
+    # num_frames = 1
+    # else:
+    # num_frames = fs // 5
+    # try:
+    # while True:
+    # frames = scientisst.read(num_frames)
+    # print([frames[0].seq] + frames[0].digital + frames[0].a)
+    # except KeyboardInterrupt:
+    # print("Stop acquisition")
+    # scientisst.stop()
+    sys.exit(0)
