@@ -2,7 +2,9 @@ import bluetooth
 import time
 from math import log2
 
-import frame, state
+from scientisst.frame import *
+from scientisst.state import *
+from scientisst.exceptions import *
 
 TIMEOUT_IN_SECONDS = 3
 
@@ -145,14 +147,18 @@ class ScientISST:
         Returns
         -------
         void
+
+        Exceptions
+        ----------
+        DeviceNotIdleError : if the device is already in acquisition mode.
+        InvalidParameterError : if no valid API value is chosen or an incorrect array of channels is provided.
         """
         if self.__num_chs != 0:
-            print("Device not idle")
-            return
+            raise DeviceNotIdleError();
 
         if api != API_MODE_SCIENTISST and api != API_MODE_JSON:
-            print("Invalid parameter")
-            return
+            raise InvalidParameterError();
+
         api = int(api)
 
         self.__sample_rate = sample_rate
@@ -174,12 +180,12 @@ class ScientISST:
             for ch in channels:
                 self.__chs[self.__num_chs] = ch  # Fill chs vector
                 if ch < 0 or ch > 8:
-                    print("Invalid parameter")
-                    return
+                    raise InvalidParameterError()
+
                 mask = 1 << (ch - 1)
                 if chMask & mask:
-                    print("Invalid parameter")
-                    return
+                    raise InvalidParameterError()
+
                 chMask |= mask
                 self.__num_chs += 1
 
@@ -213,30 +219,25 @@ class ScientISST:
         -------
         frames : array
             List of Frame objects retrieved from the device
+
+        Exceptions
+        ----------
+        DeviceNotInAcquisitionError : if the device is not in acquisition mode.
+        NotSupportedError : if the device API is in BITALINO mode
+        UnknownError : if the device stopped sending frames for some unknown reason.
         """
 
         bf = [None] * self.__packet_size
-
-        # unsigned char buffer[500]
-        # mid_frame_flag = 0
-        # rapidjson::Document d
-        # char memb_name[50]
-        # int curr_ch
-        # char* junk
-
         frames = [None] * num_frames
 
         if self.__num_chs == 0:
-            print("Device not in acquisition mode")
-            return
+            raise DeviceNotInAcquisitionError()
 
         for it in range(num_frames):
             mid_frame_flag = 0
             bf = list(self.__recv(self.__packet_size))
             if not bf:
-                print(
-                    "Esp stopped sending frames -> It stopped live mode on its own \n(probably because it can't handle this number of channels + sample rate)"
-                )
+                raise UnknownError("Esp stopped sending frames -> It stopped live mode on its own \n(probably because it can't handle this number of channels + sample rate)")
                 return
 
             #  if CRC check failed, try to resynchronize with the next valid frame
@@ -247,8 +248,7 @@ class ScientISST:
                 bf[-1] = int.from_bytes(result, "big")
 
                 if not bf[-1]:
-                    return -1
-                    # return int(it - frames.begin());   #  a timeout has occurred
+                    return list(filter(lambda frame: frame, frames))   #  a timeout has occurred
 
             f = Frame()
             frames[it] = f
@@ -284,7 +284,8 @@ class ScientISST:
                             )
                             i += 2
                             mid_frame_flag = 0
-            # }else if(api_mode == API_MODE_JSON){
+            elif self.__api_mode == API_MODE_JSON:
+                print(bf)
             # d.Parse((const char*)buffer);
 
             # f.seq = 1;
@@ -299,6 +300,9 @@ class ScientISST:
             # f.digital[2] = strtol(d["O1"].GetString(), &junk, 10);
             # f.digital[3] = strtol(d["O2"].GetString(), &junk, 10);
             # }
+            else:
+                raise NotSupportedError()
+
 
             self.__writeFrameFile(f)
 
@@ -315,10 +319,13 @@ class ScientISST:
         Returns
         -------
         void
+
+        Exceptions
+        ----------
+        DeviceNotInAcquisitionError : if the device is not in acquisition mode.
         """
         if self.__num_chs == 0:
-            print("Device not in acquisition mode")
-            return
+            raise DeviceNotInAcquisitionError()
 
         cmd = b"\x00"
         self.__send(cmd)  # 0  0  0  0  0  0  0  0 - Go to idle mode
@@ -349,14 +356,17 @@ class ScientISST:
         Returns
         -------
         void
+
+        Exceptions
+        ----------
+        DeviceNotIdleError : if the device is in acquisition mode.
+        InvalidParameterError : if an invalid battery threshold value is given.
         """
         if self.__num_chs != 0:
-            print("Device is not idle")
-            return
+            raise DeviceNotIdleError()
 
         if value < 0 or value > 63:
-            print("Invalid parameter")
-            return
+            raise InvalidParameterError()
 
         cmd = value << 2
         # <bat threshold> 0 0 - Set battery threshold
@@ -374,12 +384,15 @@ class ScientISST:
         Returns
         -------
         void
+
+        Exceptions
+        ----------
+        InvalidParameterError : if the length of the digital_output array is different from 2.
         """
         length = len(digital_output)
 
-        if len != 2:
-            print("Invalid parameter")
-            return
+        if length != 2:
+            raise InvalidParameterError()
 
         cmd = 0xB3  # 1  0  1  1  O2 O1 1  1 - Set digital outputs
 
@@ -401,10 +414,13 @@ class ScientISST:
         Returns
         -------
         void
+
+        Exceptions
+        ----------
+        InvalidParameterError : if the pwm_output value is outside of its range, 0-255.
         """
         if pwm_output < 0 or pwm_output > 255:
-            print("Invalid parameter")
-            return
+            raise InvalidParameterError()
 
         cmd = 0xA3  # 1  0  1  0  0  0  1  1 - Set dac output
 
@@ -424,10 +440,14 @@ class ScientISST:
         -------
         state : State
             Current device state
+
+        Exceptions
+        ----------
+        DeviceNotIdleError : if the device is in acquisition mode.
+        ContactingDeviceError : if there is an error contacting the device.
         """
         if self.__num_chs != 0:
-            print("Device not idle")
-            return
+            raise DeviceNotIdleError()
 
         cmd = 0x0B
         self.__send(cmd)
@@ -437,8 +457,7 @@ class ScientISST:
         # throw Exception(Exception::CONTACTING_DEVICE);
         result = self.__recv(16)
         if not result or not self.__checkCRC4(result, 16):
-            print("A timeout has occurred")
-            return
+            raise ContactingDeviceError()
 
         state = State()
         print(result)
@@ -475,26 +494,20 @@ class ScientISST:
 
     def __getPacketSize(self):
         packet_size = 0
-        num_intern_active_chs = 0
-        num_extern_active_chs = 0
-        # rapidjson::Document d;
-        # char value_internal_str[50];
-        # char value_external_str[50];
-        # char aux_str[50];
-        # rapidjson::Value classname;
-        # rapidjson::Value member_name(aux_str, strlen(aux_str), d.GetAllocator());
-        # rapidjson::Value member_value(aux_str, strlen(aux_str), d.GetAllocator());
-
-        for ch in self.__chs:
-            if ch:
-                # Add 24bit channel's contributuion to packet size
-                if ch == 6 or ch == 7:
-                    num_extern_active_chs += 1
-                # Count 12bit channels
-                else:
-                    num_intern_active_chs += 1
 
         if self.__api_mode == API_MODE_SCIENTISST:
+            num_intern_active_chs = 0
+            num_extern_active_chs = 0
+
+            for ch in self.__chs:
+                if ch:
+                    # Add 24bit channel's contributuion to packet size
+                    if ch == 6 or ch == 7:
+                        num_extern_active_chs += 1
+                    # Count 12bit channels
+                    else:
+                        num_intern_active_chs += 1
+
             packet_size = 3 * num_extern_active_chs
 
             # Add 12bit channel's contributuion to packet size
@@ -507,40 +520,31 @@ class ScientISST:
             packet_size += 2
             # for the I/Os and seq+crc bytes
 
-        # elif api_mode == API_MODE_JSON:
-        # d.SetObject();
+        elif self.__api_mode == API_MODE_JSON:
+            for i in range(self.__num_chs):
+                # If it's internal ch
+                if self.__chs[i]<=6:
+                    # sprintf(aux_str, "AI%d", chs[i]);
+                    # member_name.SetString(aux_str, d.GetAllocator());
+                    # member_value.SetString(value_internal_str, d.GetAllocator());
+                    # d.AddMember(member_name, member_value, d.GetAllocator());
+                    packet_size+=3  # AI%d
+                    packet_size+=2  # 0-4095 = 12 bits <= 2 bytes
+                else:
+                    packet_size+=3  # AX%d
+                    packet_size+=4  # 0-16777215 = 24 bits <= 4 bytes
+            # Add IO state json objects
+            # d.AddMember("I1", "0", d.GetAllocator());
+            # d.AddMember("I2", "0", d.GetAllocator());
+            # d.AddMember("O1", "0", d.GetAllocator());
+            # d.AddMember("O2", "0", d.GetAllocator());
+            packet_size += 3    # I1 + 0|1
+            packet_size += 3    # I2 + 0|1
+            packet_size += 3    # O1 + 0|1
+            packet_size += 3    # O1 + 0|1
 
-        # Load value strings with channels' respective max values
-        # sprintf(value_internal_str, "%04d", 4095);
-        # sprintf(value_external_str, "%08d", 16777215);
-
-        # for(int i = 0; i < num_chs; i++){
-        # # If it's internal ch
-        # if(chs[i] <= 6){
-        # sprintf(aux_str, "AI%d", chs[i]);
-        # member_name.SetString(aux_str, d.GetAllocator());
-        # member_value.SetString(value_internal_str, d.GetAllocator());
-        # d.AddMember(member_name, member_value, d.GetAllocator());
-
-        # }else{
-        # sprintf(aux_str, "AX%d", chs[i]-6);
-        # member_name.SetString(aux_str, d.GetAllocator());
-        # member_value.SetString(value_external_str, d.GetAllocator());
-        # d.AddMember(member_name, member_value, d.GetAllocator());
-        # }
-        # }
-        # # Add IO state json objects
-        # d.AddMember("I1", "0", d.GetAllocator());
-        # d.AddMember("I2", "0", d.GetAllocator());
-        # d.AddMember("O1", "0", d.GetAllocator());
-        # d.AddMember("O2", "0", d.GetAllocator());
-
-        # #  3. Stringify the DOM
-        # rapidjson::StringBuffer buffer;
-        # rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-        # d.Accept(writer);
-
-        # _packet_size = strlen(buffer.GetString())+1;
+        else:
+            raise NotSupportedError()
 
         return int(packet_size)
 
@@ -579,10 +583,10 @@ class ScientISST:
 
     def __changeAPI(self, api):
         if self.__num_chs and self.__num_chs != 0:
-            print("Device not idle")
+            raise DeviceNotIdleError()
 
         if api <= 0 or api > 3:
-            print("Invalid API")
+            raise InvalidParameterError()
 
         self.__api_mode = api
 
@@ -618,10 +622,11 @@ class ScientISST:
                 command = b"\x00"
         if self.__sock:
             time.sleep(0.150)
+            # print bytes sent
             # print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
             self.__sock.send(command)
         else:
-            raise AttributeError("No device connected")
+            raise ContactingDeviceError()
 
     def __recv(self, nrOfBytes):
         """
