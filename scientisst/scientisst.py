@@ -159,8 +159,6 @@ class ScientISST:
         if api != API_MODE_SCIENTISST and api != API_MODE_JSON:
             raise InvalidParameterError();
 
-        api = int(api)
-
         self.__sample_rate = sample_rate
         self.__num_chs = 0
 
@@ -178,9 +176,9 @@ class ScientISST:
         else:
             chMask = 0
             for ch in channels:
-                self.__chs[self.__num_chs] = ch  # Fill chs vector
                 if ch < 0 or ch > 8:
                     raise InvalidParameterError()
+                self.__chs[self.__num_chs] = ch  # Fill chs vector
 
                 mask = 1 << (ch - 1)
                 if chMask & mask:
@@ -623,7 +621,7 @@ class ScientISST:
         if self.__sock:
             time.sleep(0.150)
             # print bytes sent
-            # print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
+            print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
             self.__sock.send(command)
         else:
             raise ContactingDeviceError()
