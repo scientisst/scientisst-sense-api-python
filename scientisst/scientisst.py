@@ -225,7 +225,6 @@ class ScientISST:
         UnknownError : if the device stopped sending frames for some unknown reason.
         """
 
-        bf = [None] * self.__packet_size
         frames = [None] * num_frames
 
         if self.__num_chs == 0:
@@ -236,7 +235,6 @@ class ScientISST:
             bf = list(self.__recv(self.__packet_size))
             if not bf:
                 raise UnknownError("Esp stopped sending frames -> It stopped live mode on its own \n(probably because it can't handle this number of channels + sample rate)")
-                return
 
             #  if CRC check failed, try to resynchronize with the next valid frame
             while not self.__checkCRC4(bf, self.__packet_size):
@@ -257,30 +255,31 @@ class ScientISST:
                     f.digital[i] = (bf[-2] & (0x80 >> i)) != 0
 
                 # Get channel values
+                j=0
                 for i in range(self.__num_chs):
                     curr_ch = self.__chs[self.__num_chs - 1 - i]
 
                     # If it's an AX channel
                     if curr_ch == AX1 or curr_ch == AX2:
-                        f.a[curr_ch] = (
-                            int.from_bytes(bf[i : i + 4], byteorder="little") & 0xFFFFFF
+                        f.a[curr_ch-1] = (
+                            int.from_bytes(bf[j : j + 4], byteorder="little") & 0xFFFFFF
                         )
-                        i += 3
+                        j += 3
 
                     # If it's an AI channel
                     else:
                         if not mid_frame_flag:
                             f.a[curr_ch - 1] = (
-                                int.from_bytes(bf[i : i + 2], byteorder="little")
+                                int.from_bytes(bf[j : j + 2], byteorder="little")
                                 & 0xFFF
                             )
-                            i += 1
+                            j += 1
                             mid_frame_flag = 1
                         else:
                             f.a[curr_ch - 1] = (
-                                int.from_bytes(bf[i : i + 2], byteorder="little") >> 4
+                                int.from_bytes(bf[j : j + 2], byteorder="little") >> 4
                             )
-                            i += 2
+                            j += 2
                             mid_frame_flag = 0
             elif self.__api_mode == API_MODE_JSON:
                 print(bf)
@@ -605,7 +604,7 @@ class ScientISST:
         crc = CRC4tab[crc] ^ (data[-1] >> 4)
         crc = CRC4tab[crc]
 
-        return crc == (data[length - 1] & 0x0F)
+        return crc == (data[ - 1] & 0x0F)
 
     def __send(self, command):
         """
