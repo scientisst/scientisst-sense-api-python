@@ -129,7 +129,7 @@ class ScientISST:
         self, sample_rate, channels, file_name, simulated=False, api=API_MODE_SCIENTISST
     ):
         """
-        Starts a signal acquisition from the device.
+        Starts a signal acquisition from the device
 
         Parameters
         ----------
@@ -405,7 +405,7 @@ class ScientISST:
 
         Parameters
         ----------
-        pwm_output : array
+        pwm_output : int
             Analog output value to set (0...255).
 
         Returns
@@ -472,7 +472,7 @@ class ScientISST:
 
     def disconnect(self):
         """
-        Disconnects from a %ScientISST device. If an aquisition is running, it is stopped.
+        Disconnects from a ScientISST device. If an aquisition is running, it is stopped
 
         Parameters
         ----------
@@ -515,8 +515,8 @@ class ScientISST:
                 packet_size += (
                     (num_intern_active_chs * 12) - 4
                 ) / 8  # -4 because 4 bits can go in the I/0 byte
-            packet_size += 2
             # for the I/Os and seq+crc bytes
+            packet_size += 2
 
         elif self.__api_mode == API_MODE_JSON:
             for i in range(self.__num_chs):
