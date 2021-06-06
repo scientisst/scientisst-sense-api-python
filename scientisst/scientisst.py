@@ -255,31 +255,31 @@ class ScientISST:
                     f.digital[i] = (bf[-2] & (0x80 >> i)) != 0
 
                 # Get channel values
-                j=0
+                byte_it=0
                 for i in range(self.__num_chs):
                     curr_ch = self.__chs[self.__num_chs - 1 - i]
 
                     # If it's an AX channel
                     if curr_ch == AX1 or curr_ch == AX2:
                         f.a[curr_ch-1] = (
-                            int.from_bytes(bf[j : j + 4], byteorder="little") & 0xFFFFFF
+                            int.from_bytes(bf[byte_it : byte_it + 4], byteorder="little") & 0xFFFFFF
                         )
-                        j += 3
+                        byte_it += 3
 
                     # If it's an AI channel
                     else:
                         if not mid_frame_flag:
                             f.a[curr_ch - 1] = (
-                                int.from_bytes(bf[j : j + 2], byteorder="little")
+                                int.from_bytes(bf[byte_it : byte_it + 2], byteorder="little")
                                 & 0xFFF
                             )
-                            j += 1
+                            byte_it += 1
                             mid_frame_flag = 1
                         else:
                             f.a[curr_ch - 1] = (
-                                int.from_bytes(bf[j : j + 2], byteorder="little") >> 4
+                                int.from_bytes(bf[byte_it : byte_it + 2], byteorder="little") >> 4
                             )
-                            j += 2
+                            byte_it += 2
                             mid_frame_flag = 0
             elif self.__api_mode == API_MODE_JSON:
                 print(bf)
@@ -499,12 +499,13 @@ class ScientISST:
             for ch in self.__chs:
                 if ch:
                     # Add 24bit channel's contributuion to packet size
-                    if ch == 6 or ch == 7:
+                    if ch == AX1 or ch == AX2:
                         num_extern_active_chs += 1
                     # Count 12bit channels
                     else:
                         num_intern_active_chs += 1
 
+            # Add 24bit channel's contributuion to packet size
             packet_size = 3 * num_extern_active_chs
 
             # Add 12bit channel's contributuion to packet size
