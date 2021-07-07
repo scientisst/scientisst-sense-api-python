@@ -136,7 +136,7 @@ class ScientISST:
         sample_rate : int
             Sampling rate in Hz. Accepted values are 1, 10, 100 or 1000 Hz.
         channels : array
-            Set of channels to acquire. Accepted channels are 0...5 for inputs A1...A6.
+            Set of channels to acquire. Accepted channels are 1...6 for inputs A1...A6.
         file_name : string
             Name of the file where the live mode data will be written into.
         simulated : bool
@@ -176,7 +176,7 @@ class ScientISST:
         else:
             chMask = 0
             for ch in channels:
-                if ch < 0 or ch > 8:
+                if ch <= 0 or ch > 8:
                     raise InvalidParameterError()
                 self.__chs[self.__num_chs] = ch  # Fill chs vector
 
@@ -621,7 +621,7 @@ class ScientISST:
         if self.__sock:
             time.sleep(0.150)
             # print bytes sent
-            print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
+            # print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
             self.__sock.send(command)
         else:
             raise ContactingDeviceError()
