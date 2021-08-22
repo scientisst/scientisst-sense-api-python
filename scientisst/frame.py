@@ -1,6 +1,6 @@
 class Frame:
     digital = [0] * 4
-    seq = None
+    seq = -1
     a = [0] * 8
 
     def toMap(self):
@@ -8,3 +8,6 @@ class Frame:
 
     def toString(self):
         return str(self.toMap())
+
+    def print(self):
+        return ", ".join(map(str,[self.seq] + self.digital + self.a))

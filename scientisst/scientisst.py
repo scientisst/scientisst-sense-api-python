@@ -168,7 +168,7 @@ class ScientISST:
         # Sample rate
         sr = 0b01000011
         sr |= self.__sample_rate << 8
-        self.__send(sr)
+        self.__send(sr,4)
 
         if not channels:  # channels is empty
             chMask = 0xFF  #  all 8 analog channels
@@ -607,7 +607,7 @@ class ScientISST:
 
         return crc == (data[ - 1] & 0x0F)
 
-    def __send(self, command):
+    def __send(self, command, nrOfBytes=None):
         """
         Send data
         """
@@ -618,10 +618,13 @@ class ScientISST:
                 )
             else:
                 command = b"\x00"
+        if nrOfBytes and len(command)<nrOfBytes:
+            for _ in range(nrOfBytes-len(command)):
+                command += b"\x00"
         if self.__sock:
             time.sleep(0.150)
             # print bytes sent
-            # print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
+            print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
             self.__sock.send(command)
         else:
             raise ContactingDeviceError()
@@ -634,6 +637,10 @@ class ScientISST:
         self.__sock.settimeout(TIMEOUT_IN_SECONDS)
         try:
             result = self.__sock.recv(nrOfBytes)
+            # if nrOfBytes>1:
+                # print("{} bytes received: ".format(len(nrOfBytes))+ " ".join("{:02x}".format(c) for c in result))
+            # else:
+                # print("{} bytes received: ".format(1) + str(result) )
             pass
         except bluetooth.btcommon.BluetoothError:
             pass
