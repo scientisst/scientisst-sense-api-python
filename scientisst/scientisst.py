@@ -1,4 +1,4 @@
-import bluetooth
+import serial
 import time
 from math import log2
 
@@ -24,64 +24,36 @@ AX1 = 7
 AX2 = 8
 
 
-def find():
-    """
-    Searches for Bluetooth devices in range.
-
-    Parameters
-    ----------
-    void
-
-    Returns
-    -------
-    devices : array
-        List of found devices addresses
-    """
-
-    nearby_devices = bluetooth.discover_devices(lookup_names=True)
-
-    c = 0
-    devices = []
-    for addr, name in nearby_devices:
-        if "scientisst" in name.lower():
-            devices += [addr]
-            if c == 0:
-                "Devices found:"
-            c += 1
-            print("{} - {}".format(addr, name))
-    if c == 0:
-        print("Found no devices")
-    return devices
-
-
 class ScientISST:
     """
     ScientISST Device class
 
     Parameters
     ----------
-    address : String
-        The device Bluetooth MAC address ("xx:xx:xx:xx:xx:xx")
+    serial_port : String
+        The device serial port address ("/dev/example")
+    serial_speed : int
+        The serial port bitrate. Default: 115200 bit/s.
+    log : bool
+        If the bytes sent and received should be showed. Default: False.
     """
 
-    __port = 1
-    __sock = None
+    __serial = None
     __num_chs = 0
     __api_mode = 1
     __sample_rate = None
     __chs = [None] * 8
     __f = None
+    __log = False
 
-    def __init__(self, address):
-        self.address = address
-        # Close socket if it exists
-        if self.__sock:
-            self.disconnect()
+    def __init__(self, serial_port, serial_speed = 115200, log=False):
+        self.address = serial_port
+        self.speed = serial_speed
+        self.__log = log
 
         print("Connecting to device...")
         # Create the client socket
-        self.__sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        self.__sock.connect((self.address, self.__port))
+        self.__serial = serial.Serial(serial_port, serial_speed, timeout=TIMEOUT_IN_SECONDS)
         print("Connected!")
 
     def version(self):
@@ -484,8 +456,8 @@ class ScientISST:
         """
         if self.__num_chs != 0:
             self.stop()
-        self.__sock.close()
-        self.__sock = None
+        self.__serial.close()
+        self.__serial = None
         print("Disconnected")
 
 
@@ -621,11 +593,11 @@ class ScientISST:
         if nrOfBytes and len(command)<nrOfBytes:
             for _ in range(nrOfBytes-len(command)):
                 command += b"\x00"
-        if self.__sock:
+        if self.__serial:
             time.sleep(0.150)
-            # print bytes sent
-            print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
-            self.__sock.send(command)
+            if self.__log:
+                print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
+            self.__serial.write(command)
         else:
             raise ContactingDeviceError()
 
@@ -634,17 +606,12 @@ class ScientISST:
         Receive data
         """
         result = None
-        self.__sock.settimeout(TIMEOUT_IN_SECONDS)
-        try:
-            result = self.__sock.recv(nrOfBytes)
-            # if nrOfBytes>1:
-                # print("{} bytes received: ".format(len(nrOfBytes))+ " ".join("{:02x}".format(c) for c in result))
-            # else:
-                # print("{} bytes received: ".format(1) + str(result) )
-            pass
-        except bluetooth.btcommon.BluetoothError:
-            pass
-        self.__sock.settimeout(None)
+        result = self.__serial.read(nrOfBytes)
+        if self.__log:
+            if nrOfBytes>1:
+                print("{} bytes received: ".format(len(nrOfBytes))+ " ".join("{:02x}".format(c) for c in result))
+            else:
+                print("{} bytes received: ".format(1) + str(result) )
         return result
 
     def __clear(self):

@@ -1,11 +1,9 @@
 import sys
-import bluetooth
 from scientisst.scientisst import *
-import matplotlib.pyplot as plt
 from threading import Timer
 import sys
 
-DURATION=5
+DURATION=0
 recording=False
 
 def run_scheduled_task(scientisst,DURATION):
@@ -23,7 +21,7 @@ def stop(scientisst):
 if __name__ == "__main__":
 
     # find()
-    scientisst = ScientISST("4C:11:AE:88:84:5A")
+    scientisst = ScientISST("/dev/rfcomm0")
     scientisst.version()
 
     fs = 100
