@@ -1,4 +1,4 @@
-import bluetooth
+import serial
 import time
 from math import log2
 
@@ -64,24 +64,20 @@ class ScientISST:
         The device Bluetooth MAC address ("xx:xx:xx:xx:xx:xx")
     """
 
-    __port = 1
-    __sock = None
+    __serial = None
     __num_chs = 0
     __api_mode = 1
     __sample_rate = None
     __chs = [None] * 8
     __f = None
 
-    def __init__(self, address):
-        self.address = address
-        # Close socket if it exists
-        if self.__sock:
-            self.disconnect()
+    def __init__(self, serial_port, serial_speed = 115200):
+        self.address = serial_port
+        self.speed = serial_speed
 
         print("Connecting to device...")
         # Create the client socket
-        self.__sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        self.__sock.connect((self.address, self.__port))
+        self.__serial = serial.Serial(serial_port, serial_speed, timeout=TIMEOUT_IN_SECONDS)
         print("Connected!")
 
     def version(self):
@@ -484,8 +480,8 @@ class ScientISST:
         """
         if self.__num_chs != 0:
             self.stop()
-        self.__sock.close()
-        self.__sock = None
+        self.__serial.close()
+        self.__serial = None
         print("Disconnected")
 
 
@@ -621,11 +617,11 @@ class ScientISST:
         if nrOfBytes and len(command)<nrOfBytes:
             for _ in range(nrOfBytes-len(command)):
                 command += b"\x00"
-        if self.__sock:
+        if self.__serial:
             time.sleep(0.150)
             # print bytes sent
-            print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
-            self.__sock.send(command)
+            # print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
+            self.__serial.write(command)
         else:
             raise ContactingDeviceError()
 
@@ -634,17 +630,11 @@ class ScientISST:
         Receive data
         """
         result = None
-        self.__sock.settimeout(TIMEOUT_IN_SECONDS)
-        try:
-            result = self.__sock.recv(nrOfBytes)
-            # if nrOfBytes>1:
-                # print("{} bytes received: ".format(len(nrOfBytes))+ " ".join("{:02x}".format(c) for c in result))
-            # else:
-                # print("{} bytes received: ".format(1) + str(result) )
-            pass
-        except bluetooth.btcommon.BluetoothError:
-            pass
-        self.__sock.settimeout(None)
+        result = self.__serial.read(nrOfBytes)
+        # if nrOfBytes>1:
+            # print("{} bytes received: ".format(len(nrOfBytes))+ " ".join("{:02x}".format(c) for c in result))
+        # else:
+            # print("{} bytes received: ".format(1) + str(result) )
         return result
 
     def __clear(self):

@@ -23,7 +23,7 @@ def stop(scientisst):
 if __name__ == "__main__":
 
     # find()
-    scientisst = ScientISST("4C:11:AE:88:84:5A")
+    scientisst = ScientISST("/dev/tty.ScientISST-e8-48-SPP_SE")
     scientisst.version()
 
     fs = 100
