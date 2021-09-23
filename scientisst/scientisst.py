@@ -98,7 +98,7 @@ class ScientISST:
         return version
 
     def start(
-        self, sample_rate, channels, file_name, simulated=False, api=API_MODE_SCIENTISST
+        self, sample_rate, channels, file_name=None, simulated=False, api=API_MODE_SCIENTISST
     ):
         """
         Starts a signal acquisition from the device
@@ -172,8 +172,9 @@ class ScientISST:
 
         self.__packet_size = self.__getPacketSize()
 
-        # Open file and write header
-        self.__initFile(file_name)
+        # If file_name was provided, open file and write header
+        if file_name:
+            self.__initFile(file_name)
 
     def read(self, num_frames):
         """
@@ -206,6 +207,8 @@ class ScientISST:
             mid_frame_flag = 0
             bf = list(self.__recv(self.__packet_size))
             if not bf:
+                if self.__f:
+                    self.__closeFile()
                 raise UnknownError("Esp stopped sending frames -> It stopped live mode on its own \n(probably because it can't handle this number of channels + sample rate)")
 
             #  if CRC check failed, try to resynchronize with the next valid frame
@@ -273,7 +276,8 @@ class ScientISST:
                 raise NotSupportedError()
 
 
-            self.__writeFrameFile(f)
+        if self.__f:
+            self.__writeFramesFile(frames)
 
         return frames
 
@@ -305,8 +309,8 @@ class ScientISST:
         # Cleanup existing data in bluetooth socket
         self.__clear()
 
-        # fclose(output_fd);
-        self.__f.close()
+        if self.__f:
+            self.__closeFile()
 
     def battery(self, value=0):
         """
@@ -520,36 +524,28 @@ class ScientISST:
 
     def __initFile(self, filename):
         self.__f = open(filename, "w")
-        self.__f.write("NSeq, I1, I2, O1, O2, ")
+        header = "NSeq, I1, I2, O1, O2, "
         for i in range(self.__num_chs):
-            ch = int(self.__chs[i])
+            ch = self.__chs[i]
             if ch == AX1 or ch == AX2:
                 if i == self.__num_chs - 1:
-                    self.__f.write("AX{}".format(ch))
+                    header += "AX{}".format(ch)
                 else:
-                    self.__f.write("AX{}, ".format(ch))
+                    header += "AX{}, ".format(ch)
             else:
                 if i == self.__num_chs - 1:
-                    self.__f.write("AI{}".format(ch))
+                    header += "AI{}".format(ch)
                 else:
-                    self.__f.write("AI{}, ".format(ch))
-        self.__f.write("\n")
+                    header += "AI{}, ".format(ch)
+        self.__f.write(header + "\n")
 
-    def __writeFrameFile(self, f):
-        self.__f.write(
-            "{}, {}, {}, {}, {}, ".format(
-                f.seq, f.digital[0], f.digital[1], f.digital[2], f.digital[3]
-            )
-        )
+    def __writeFramesFile(self, frames):
+        self.__f.write("\n".join(map(str,frames))+ "\n")
 
-        for i in range(self.__num_chs):
-            if i == self.__num_chs - 1:
-                # self.__f.write("%d", esp_adc_cal_raw_to_voltage(f.a[chs[i]-1], &adc1_chars))
-                self.__f.write("{}".format(f.a[self.__chs[i] - 1]))
-            else:
-                # self.__f.write("%d, ", esp_adc_cal_raw_to_voltage(f.a[chs[i]-1], &adc1_chars))
-                self.__f.write("{}, ".format(f.a[self.__chs[i] - 1]))
-        self.__f.write("\n")
+
+    def __closeFile(self):
+        self.__f.close()
+
 
     def __changeAPI(self, api):
         if self.__num_chs and self.__num_chs != 0:
