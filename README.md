@@ -22,6 +22,22 @@ git clone https://github.com/scientisst/scientisst-sense-api-python.git
 
 ## Running
 
+```
+$ python main.py -h
+Usage: main.py [options]
+
+Options:
+  -h, --help            show this help message and exit  -a ADDRESS, --address=ADDRESS
+                        device serial port ADDRESS, default: /dev/rfcomm0  -f FS, --frequency=FS
+                        sampling FREQUENCY, default: 1000  -c CHANNELS, --channels=CHANNELS
+                        analog CHANNELS, default: [1, 2, 3, 4, 5, 6]
+  -d DURATION, --duration=DURATION
+                        DURATION in seconds, default: unlimited
+  -o OUTPUT, --output=OUTPUT
+                        write report to OUTPUT file, default: None
+  -q, --quiet           don't print ScientISST frames
+```
+
 ### Mac
 
 First, you need to pair the ScientISST sense device in the Bluetooth Settings section.
