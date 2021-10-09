@@ -89,8 +89,23 @@ You can provide a duration on the script file, or simply hit `CTRL-C` when you w
 
 ### Windows
 
-Not tested yet.
+Turn the ScientISST Sense board on.
 
+Now, go to Control Panel > Hardware and Sound > Devices and Printers. Select "Add a device". Select the ScientISST Sense board, hit "next" until its set up.
+
+While connected to the board, search "Bluetooth settings" on the Control Panel, then go to the "COM ports" tab and check the port name for the **outgoing** entry. Type the `String` like: `COMX` and replace it in the main.py file:
+
+```sh
+scientisst = ScientISST("COMX")
+```
+
+You can now simply run the `main.py` script:
+
+```sh
+python main.py
+```
+
+You can provide a duration on the script file, or simply hit `CTRL-C` when you wish to stop.
 ## Plot
 
 Dependencies:
