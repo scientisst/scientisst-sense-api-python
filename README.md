@@ -77,7 +77,7 @@ trust XX:XX:XX:XX:XX
 Now open a serial port with the device and leave the command running:
 
 ```sh
-sudo rfcomm connect XX:XX:XX:XX:XX &
+sudo rfcomm connect hci0 XX:XX:XX:XX:XX &
 ```
 
 You can now simply run the `main.py` script:
