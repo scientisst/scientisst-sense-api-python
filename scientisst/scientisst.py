@@ -629,7 +629,7 @@ class ScientISST:
             if nrOfBytes>1:
                 print("{} bytes received: ".format(nrOfBytes)+ " ".join("{:02x}".format(c) for c in result))
             else:
-                print("{} bytes received: ".format(1) + str(result) )
+                print("{} bytes received: {}".format(1,result.hex()))
         return result
 
     def __clear(self):

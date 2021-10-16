@@ -68,6 +68,14 @@ if __name__ == "__main__":
         default=True,
         help="don't print ScientISST frames",
         )
+    parser.add_option(
+        '-v',
+        '--verbose',
+        dest='log',
+        action='store_true',
+        default=False,
+        help="log bytes sent/received",
+        )
     (options, args) = parser.parse_args()
 
     if len(sys.argv)<2:
@@ -76,7 +84,7 @@ if __name__ == "__main__":
         parser.exit(msg="Provide an address.")
 
     address = sys.argv[1]
-    scientisst = ScientISST(address,log=True)
+    scientisst = ScientISST(address,log=options.log)
     scientisst.version()
 
     if options.fs == 1:
