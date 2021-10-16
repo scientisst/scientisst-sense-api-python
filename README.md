@@ -1,4 +1,3 @@
-
 # scientisst-sense-api-python
 
 The ScientISST SENSE Python API
