@@ -636,10 +636,18 @@ class ScientISST:
         """
         Clear the device buffer
         """
-        self.__socket.setblocking(False)
+        if self.__socket:
+            self.__socket.setblocking(False)
+        else:
+            self.__serial.timeout = 0
+
         try:
             while self.__recv(1):
                 pass
         except BlockingIOError:
             pass
-        self.__socket.setblocking(True)
+
+        if self.__socket:
+            self.__socket.setblocking(True)
+        else:
+            self.__serial.timeout = TIMEOUT_IN_SECONDS
