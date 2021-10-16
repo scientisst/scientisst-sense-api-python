@@ -4,7 +4,7 @@ import sys
 from scientisst.scientisst import *
 from threading import Timer
 import sys
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 recording=False
 
@@ -19,48 +19,50 @@ def stop(scientisst):
     scientisst.disconnect()
     sys.exit(0)
 
-def get_comma_separated_args(option, _, value, parser):
-    setattr(parser.values, option.dest, list(map(int,value.split(','))))
-
 if __name__ == "__main__":
 
-    usage = "usage: %prog [options] address"
-    parser = OptionParser(usage=usage)
-    parser.add_option(
+    usage = "%(prog)s [args] address"
+    description = "description: The program connects to the ScientISST Sense device and starts an acquisition, providing the option to store the received data in a .csv file."
+    parser = ArgumentParser(usage=usage, description=description)
+    parser.add_argument(
+        'address',
+        type=str,
+        help='Linux: bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port'
+        )
+    parser.add_argument(
         '-f',
         '--frequency',
         dest='fs',
-        help='sampling FREQUENCY, default: 1000',
-        type='int',
-        default=100,
+        help='sampling frequency, default: 1000',
+        type=int,
+        default=1000,
         )
-    parser.add_option(
+    parser.add_argument(
         '-c',
         '--channels',
-        dest='channels',
-        help='analog CHANNELS, default: "1,2,3,4,5,6"',
-        type='string',
-        action='callback',
-        callback=get_comma_separated_args,
+        dest='channel',
+        type=int,
+        nargs='+',
+        help='analog channels, default: "1 2 3 4 5 6"',
         default=[1,2,3,4,5,6],
         )
-    parser.add_option(
+    parser.add_argument(
         '-d',
         '--duration',
         dest='duration',
-        help='DURATION in seconds, default: unlimited',
-        type='int',
+        help='duration in seconds, default: unlimited',
+        type=int,
         default=0,
         )
-    parser.add_option(
+    parser.add_argument(
         '-o',
         '--output',
         dest='output',
-        help='write report to OUTPUT file, default: None',
-        type='string',
+        help='write report to output file, default: None',
+        type=str,
         default=None,
         )
-    parser.add_option(
+    parser.add_argument(
         '-q',
         '--quiet',
         action='store_false',
@@ -68,40 +70,35 @@ if __name__ == "__main__":
         default=True,
         help="don't print ScientISST frames",
         )
-    parser.add_option(
+    parser.add_argument(
         '-v',
         '--verbose',
         dest='log',
         action='store_true',
         default=False,
-        help="log bytes sent/received",
+        help="log sent/received bytes",
         )
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()
 
-    if len(sys.argv)<2:
-        parser.print_help()
-        print("")
-        parser.exit(msg="Provide an address.")
-
-    address = sys.argv[1]
-    scientisst = ScientISST(address,log=options.log)
+    print(args.address)
+    scientisst = ScientISST(args.address,log=args.log)
     scientisst.version()
 
-    if options.fs == 1:
+    if args.fs == 1:
         num_frames = 1
     else:
-        num_frames = options.fs // 5
+        num_frames = args.fs // 5
 
-    scientisst.start(options.fs, options.channels, options.output, False, API_MODE_SCIENTISST)
+    scientisst.start(args.fs, args.channel, args.output, False, API_MODE_SCIENTISST)
     recording = True
     print("Start acquisition")
 
-    if options.duration>0:
-        run_scheduled_task(scientisst,options.duration)
+    if args.duration>0:
+        run_scheduled_task(scientisst,args.duration)
     try:
         while recording:
             frames = scientisst.read(num_frames)
-            if options.verbose:
+            if args.verbose:
                 print(frames[0])
     except KeyboardInterrupt:
         print("Stop acquisition")
