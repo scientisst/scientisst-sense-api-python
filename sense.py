@@ -24,32 +24,25 @@ def get_comma_separated_args(option, _, value, parser):
 
 if __name__ == "__main__":
 
-    parser = OptionParser()
-    parser.add_option(
-        '-a',
-        '--address',
-        dest='address',
-        help='device serial port ADDRESS, default: /dev/rfcomm0',
-        type='string',
-        default='/dev/rfcomm0',
-        )
+    usage = "usage: %prog [options] address"
+    parser = OptionParser(usage=usage)
     parser.add_option(
         '-f',
         '--frequency',
         dest='fs',
         help='sampling FREQUENCY, default: 1000',
         type='int',
-        default=1000,
+        default=100,
         )
     parser.add_option(
         '-c',
         '--channels',
         dest='channels',
-        help='analog CHANNELS, default: [1, 2, 3, 4, 5, 6]',
+        help='analog CHANNELS, default: "1,2,3,4,5,6"',
         type='string',
         action='callback',
         callback=get_comma_separated_args,
-        default=[1,2,3,4,5,6]
+        default=[1,2,3,4,5,6],
         )
     parser.add_option(
         '-d',
@@ -77,7 +70,13 @@ if __name__ == "__main__":
         )
     (options, args) = parser.parse_args()
 
-    scientisst = ScientISST(options.address)
+    if len(sys.argv)<2:
+        parser.print_help()
+        print("")
+        parser.exit(msg="Provide an address.")
+
+    address = sys.argv[1]
+    scientisst = ScientISST(address,log=True)
     scientisst.version()
 
     if options.fs == 1:
