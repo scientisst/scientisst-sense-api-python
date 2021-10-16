@@ -38,6 +38,8 @@ Options:
   -q, --quiet           don't print ScientISST frames
 ```
 
+Simply hit `CTRL-C` when you wish to stop.
+
 ### Mac
 
 First, you need to pair the ScientISST sense device in the Bluetooth Settings section.
@@ -53,12 +55,11 @@ Copy the `String` like: `/dev/tty.ScientISST-XX-XX-SPP_SE` and replace it in the
 scientisst = ScientISST("/dev/tty.ScientISST-XX-XX-SPP_SE")
 ```
 
-You can now simply run the `main.py` script:
+You can now run the `main.py` script:
+
 ```sh
 python main.py
 ```
-
-You can provide a duration on the script file, or simply hit `CTRL-C` when you wish to stop.
 
 
 ### Linux
@@ -74,22 +75,30 @@ pair XX:XX:XX:XX:XX
 trust XX:XX:XX:XX:XX
 ```
 
-Now open a serial port with the device and leave the command running:
-
-```sh
-sudo rfcomm connect XX:XX:XX:XX:XX &
-```
-
-You can now simply run the `main.py` script:
+You can now run the `main.py` script:
 ```sh
 python main.py
 ```
 
-You can provide a duration on the script file, or simply hit `CTRL-C` when you wish to stop.
 
 ### Windows
 
-Not tested yet.
+Turn the ScientISST Sense board on.
+
+Now, go to Control Panel > Hardware and Sound > Devices and Printers. Select "Add a device". Select the ScientISST Sense board, hit "next" until its set up.
+
+While connected to the board, search "Bluetooth settings" on the Control Panel, then go to the "COM ports" tab and check the port name for the **outgoing** entry. Type the `String` like: `COMX` and replace it in the main.py file:
+
+```sh
+scientisst = ScientISST("COMX")
+```
+
+You can now run the `main.py` script:
+
+```sh
+python main.py
+```
+
 
 ## Plot
 

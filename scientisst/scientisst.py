@@ -1,4 +1,9 @@
-import serial
+from sys import platform
+if platform=='linux':
+    import socket
+else:
+    import serial
+
 import time
 from math import log2
 
@@ -6,7 +11,7 @@ from scientisst.frame import *
 from scientisst.state import *
 from scientisst.exceptions import *
 
-TIMEOUT_IN_SECONDS = 3
+TIMEOUT_IN_SECONDS = 10
 
 # API_MODE
 API_MODE_BITALINO = 1
@@ -30,7 +35,7 @@ class ScientISST:
 
     Parameters
     ----------
-    serial_port : String
+    address : String
         The device serial port address ("/dev/example")
     serial_speed : int
         The serial port bitrate. Default: 115200 bit/s.
@@ -39,6 +44,7 @@ class ScientISST:
     """
 
     __serial = None
+    __socket = None
     __num_chs = 0
     __api_mode = 1
     __sample_rate = None
@@ -46,14 +52,20 @@ class ScientISST:
     __f = None
     __log = False
 
-    def __init__(self, serial_port, serial_speed = 115200, log=False):
-        self.address = serial_port
+    def __init__(self, address, serial_speed = 115200, log=False):
+        self.address = address
         self.speed = serial_speed
         self.__log = log
 
         print("Connecting to device...")
         # Create the client socket
-        self.__serial = serial.Serial(serial_port, serial_speed, timeout=TIMEOUT_IN_SECONDS)
+        if platform == 'linux':
+            self.__socket = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+            self.__socket.settimeout(TIMEOUT_IN_SECONDS)
+            self.__socket.connect((address, 1))
+        else:
+            self.__serial = serial.Serial(address, serial_speed, timeout=TIMEOUT_IN_SECONDS)
+
         print("Connected!")
 
     def version(self):
@@ -460,8 +472,12 @@ class ScientISST:
         """
         if self.__num_chs != 0:
             self.stop()
-        self.__serial.close()
-        self.__serial = None
+        if self.__socket:
+            self.__socket.close()
+            self.__socket = None
+        else:
+            self.__serial.close()
+            self.__serial = None
         print("Disconnected")
 
 
@@ -589,23 +605,29 @@ class ScientISST:
         if nrOfBytes and len(command)<nrOfBytes:
             for _ in range(nrOfBytes-len(command)):
                 command += b"\x00"
-        if self.__serial:
-            time.sleep(0.150)
-            if self.__log:
-                print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
-            self.__serial.write(command)
+        # if self.__serial:
+        time.sleep(0.150)
+        if self.__log:
+            print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
+        if self.__socket:
+            self.__socket.send(command)
         else:
-            raise ContactingDeviceError()
+            self.__serial.write(command)
+        # else:
+            # raise ContactingDeviceError()
 
     def __recv(self, nrOfBytes):
         """
         Receive data
         """
         result = None
-        result = self.__serial.read(nrOfBytes)
+        if self.__socket:
+            result = self.__socket.recv(nrOfBytes)
+        else:
+            result = self.__serial.read(nrOfBytes)
         if self.__log:
             if nrOfBytes>1:
-                print("{} bytes received: ".format(len(nrOfBytes))+ " ".join("{:02x}".format(c) for c in result))
+                print("{} bytes received: ".format(nrOfBytes)+ " ".join("{:02x}".format(c) for c in result))
             else:
                 print("{} bytes received: ".format(1) + str(result) )
         return result
@@ -614,5 +636,10 @@ class ScientISST:
         """
         Clear the device buffer
         """
-        while self.__recv(1):
+        self.__socket.setblocking(False)
+        try:
+            while self.__recv(1):
+                pass
+        except BlockingIOError:
             pass
+        self.__socket.setblocking(True)
