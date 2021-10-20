@@ -80,7 +80,6 @@ if __name__ == "__main__":
         )
     args = parser.parse_args()
 
-    print(args.address)
     scientisst = ScientISST(args.address,log=args.log)
     scientisst.version()
 
