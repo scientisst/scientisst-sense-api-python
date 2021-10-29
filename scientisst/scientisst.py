@@ -52,7 +52,7 @@ class ScientISST:
     __f = None
     __log = False
 
-    def __init__(self, address, serial_speed = 115200, log=False):
+    def __init__(self, address, serial_speed = 115200, log=False, api=API_MODE_SCIENTISST):
         self.address = address
         self.speed = serial_speed
         self.__log = log
@@ -68,6 +68,11 @@ class ScientISST:
 
         print("Connected!")
 
+        if api != API_MODE_SCIENTISST and api != API_MODE_JSON and api != API_MODE_BITALINO:
+            raise InvalidParameterError();
+        # Set API mode
+        self.__changeAPI(api)
+
     def version(self):
         """
         Gets the device firmware version string
@@ -81,7 +86,10 @@ class ScientISST:
         version : string
             Firmware version
         """
-        header = "ScientISST"
+        if self.__api_mode == API_MODE_BITALINO:
+            header = "BITalino"
+        else:
+            header = "ScientISST"
         headerLen = len(header)
 
         cmd = b"\x07"
@@ -91,7 +99,7 @@ class ScientISST:
             result = self.__recv(1)
             if result:
                 if len(version) >= headerLen:
-                    if result == b"\x00":
+                    if (self.__api_mode == API_MODE_BITALINO and result == b"\n") or result == b"\x00":
                         break
                     elif result != b"\n":
                         version += result.decode("utf-8")
@@ -110,7 +118,7 @@ class ScientISST:
         return version
 
     def start(
-        self, sample_rate, channels, file_name=None, simulated=False, api=API_MODE_SCIENTISST
+        self, sample_rate, channels, file_name=None, simulated=False,
     ):
         """
         Starts a signal acquisition from the device
@@ -140,14 +148,12 @@ class ScientISST:
         if self.__num_chs != 0:
             raise DeviceNotIdleError();
 
-        if api != API_MODE_SCIENTISST and api != API_MODE_JSON:
-            raise InvalidParameterError();
+        # Set API mode
+        self.__changeAPI(self.__api_mode)
 
         self.__sample_rate = sample_rate
         self.__num_chs = 0
 
-        # Change API mode
-        self.__changeAPI(api)
 
         # Sample rate
         sr = 0b01000011

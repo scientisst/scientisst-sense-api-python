@@ -88,7 +88,7 @@ if __name__ == "__main__":
     else:
         num_frames = args.fs // 5
 
-    scientisst.start(args.fs, args.channel, args.output, False, API_MODE_SCIENTISST)
+    scientisst.start(args.fs, args.channel, args.output, False)
     recording = True
     print("Start acquisition")
 
