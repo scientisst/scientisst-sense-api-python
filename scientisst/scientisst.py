@@ -5,6 +5,7 @@ else:
     import serial
 
 import time
+import re
 from math import log2
 
 from scientisst.frame import *
@@ -53,6 +54,13 @@ class ScientISST:
     __log = False
 
     def __init__(self, address, serial_speed = 115200, log=False, api=API_MODE_SCIENTISST):
+
+        if not re.match("[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", address.lower()):
+            raise InvalidAddressError();
+
+        if api != API_MODE_SCIENTISST and api != API_MODE_JSON and api != API_MODE_BITALINO:
+            raise InvalidParameterError();
+
         self.address = address
         self.speed = serial_speed
         self.__log = log
@@ -68,8 +76,6 @@ class ScientISST:
 
         print("Connected!")
 
-        if api != API_MODE_SCIENTISST and api != API_MODE_JSON and api != API_MODE_BITALINO:
-            raise InvalidParameterError();
         # Set API mode
         self.__changeAPI(api)
 
