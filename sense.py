@@ -123,7 +123,6 @@ def main(argv):
     try:
         while recording:
             frames = scientisst.read(num_frames)
-            # print([frame.seq for frame in frames])
             if args.stream:
                 with data_lock:
                     lsl_buffer.put(frames)
@@ -153,21 +152,19 @@ def send_lsp(info, buffer, event,num_frames):
             if not buffer.empty():
                 frames = buffer.get()
         if frames:
-            # print([frame.seq for frame in frames])
-            chunk = [[val for val in frame.a if val is not None] for frame in frames]
+            chunk = [frame.a for frame in frames]
 
             current_index = frames[-1].seq
             lost_frames = current_index - ((previous_index + num_frames) & 15)
 
-            if lost_frames>1:
-                print("Lost frames: {}".format(lost_frames))
+            if lost_frames>0:
+                # print("Lost frames: {}".format(lost_frames))
                 timestamp = local_clock()
             else:
-                timestamp += (num_frames+lost_frames) * dt
+                timestamp += num_frames * dt
 
             previous_index = current_index
             outlet.push_chunk(chunk, timestamp)
-            # outlet.push_chunk(chunk)
             frames = None
         else:
             time.sleep(0.1)
