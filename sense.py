@@ -5,21 +5,17 @@ from scientisst.scientisst import *
 from threading import Timer
 import sys
 from argparse import ArgumentParser
-from threading import Thread, Event, Lock
+from threading import Thread, Event
 from queue import Queue
 
 from pylsl import StreamInfo, StreamOutlet, local_clock
 
-
-recording=False
 
 def run_scheduled_task(scientisst,DURATION):
     timer = Timer(DURATION, stop, [scientisst])
     timer.start()
 
 def stop(scientisst):
-    global recording
-    recording=False
     scientisst.stop()
     scientisst.disconnect()
 
@@ -43,7 +39,7 @@ def main(argv):
     parser.add_argument(
         '-c',
         '--channels',
-        dest='channel',
+        dest='channels',
         type=int,
         nargs='+',
         help='analog channels, default: "1 2 3 4 5 6"',
@@ -90,6 +86,7 @@ def main(argv):
         help="log sent/received bytes",
         )
     args = parser.parse_args()
+    args.channels = sorted(args.channels)
 
     scientisst = ScientISST(args.address,log=args.log)
     scientisst.version()
@@ -101,18 +98,23 @@ def main(argv):
 
     if args.stream:
         # create LSL stream info
-        info = StreamInfo("ScientISST Sense","RAW",len(args.channel),args.fs,"int32")
+        info = StreamInfo("ScientISST Sense","RAW",len(args.channels),args.fs,"int32")
 
         lsl_buffer = Queue()
-        event = Event()
-        t = Thread(target=send_lsp, args=(info, lsl_buffer, event,num_frames))
-        data_lock = Lock()
+        stream_event = Event()
+        lsl_thread = Thread(target=__send_lsp, args=(info, lsl_buffer, stream_event, num_frames))
+
+    if args.output:
+        f = __init_file(args.output, args.channels)
+        file_buffer = Queue()
+        file_event = Event()
+        file_thread  = Thread(target=__write_frames, args=(f, file_buffer, file_event))
+        file_thread.start()
 
 
-
-    scientisst.start(args.fs, args.channel, args.output, False)
+    scientisst.start(args.fs, args.channels)
     if args.stream:
-        t.start()
+        lsl_thread.start()
 
     recording = True
     print("Start acquisition")
@@ -121,23 +123,28 @@ def main(argv):
     if args.duration>0:
         run_scheduled_task(scientisst,args.duration)
     try:
-        while recording:
+        while True:
             frames = scientisst.read(num_frames)
+            # print([frame.seq for frame in frames])
             if args.stream:
-                with data_lock:
-                    lsl_buffer.put(frames)
+                lsl_buffer.put(frames)
+            if args.output:
+                file_buffer.put(frames)
             if args.verbose:
                 print(frames[0])
     except KeyboardInterrupt:
         pass
     print("Stop acquisition")
     if args.stream:
-        event.set()
+        stream_event.set()
+    if args.output:
+        file_event.set()
     stop(scientisst)
     sys.exit(0)
 
-def send_lsp(info, buffer, event,num_frames):
-    data_lock = Lock()
+
+
+def __send_lsp(info, buffer, event,num_frames):
     # make outlet
     outlet = StreamOutlet(info,chunk_size=num_frames)
 
@@ -148,10 +155,9 @@ def send_lsp(info, buffer, event,num_frames):
 
     print("Start LSL stream")
     while not event.is_set():
-        with data_lock:
-            if not buffer.empty():
-                frames = buffer.get()
-        if frames:
+        if not buffer.empty():
+            frames = buffer.get()
+
             chunk = [frame.a for frame in frames]
 
             current_index = frames[-1].seq
@@ -167,9 +173,35 @@ def send_lsp(info, buffer, event,num_frames):
             outlet.push_chunk(chunk, timestamp)
             frames = None
         else:
-            time.sleep(0.1)
+            time.sleep(0.2)
 
     print("Stop LSL stream")
+
+
+def __init_file(filename, channels):
+    f = open(filename, "w")
+    print("Saving data to {}".format(filename))
+
+    header = "NSeq, I1, I2, O1, O2, "
+    channel_labels = []
+    for ch in channels:
+        if ch == AX1 or ch == AX2:
+            channel_labels += "AX{}".format(ch)
+        else:
+            channel_labels += "AI{}".format(ch)
+    header += ', '.join(channel_labels)
+    f.write(header + "\n")
+    return f
+
+def __write_frames(f, buffer, event):
+    while not event.is_set():
+        if not buffer.empty():
+            frames = buffer.get()
+            f.write("\n".join(map(str,frames))+ "\n")
+        else:
+            time.sleep(0.2)
+    f.close()
+
 
 
 if __name__ == "__main__":

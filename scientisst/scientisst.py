@@ -50,7 +50,6 @@ class ScientISST:
     __api_mode = 1
     __sample_rate = None
     __chs = [None] * 8
-    __f = None
     __log = False
 
     def __init__(self, address, serial_speed = 115200, log=False, api=API_MODE_SCIENTISST):
@@ -124,7 +123,7 @@ class ScientISST:
         return version
 
     def start(
-        self, sample_rate, channels, file_name=None, simulated=False,
+        self, sample_rate, channels, simulated=False,
     ):
         """
         Starts a signal acquisition from the device
@@ -135,8 +134,6 @@ class ScientISST:
             Sampling rate in Hz. Accepted values are 1, 10, 100 or 1000 Hz.
         channels : array
             Set of channels to acquire. Accepted channels are 1...6 for inputs A1...A6.
-        file_name : string
-            Name of the file where the live mode data will be written into.
         simulated : bool
             If true, start in simulated mode. Otherwise start in live mode. Default is to start in live mode.
         api : int
@@ -196,9 +193,6 @@ class ScientISST:
 
         self.__packet_size = self.__getPacketSize()
 
-        # If file_name was provided, open file and write header
-        if file_name:
-            self.__initFile(file_name)
 
     def read(self, num_frames):
         """
@@ -231,8 +225,6 @@ class ScientISST:
             mid_frame_flag = 0
             bf = list(self.__recv(self.__packet_size))
             if not bf:
-                if self.__f:
-                    self.__closeFile()
                 raise UnknownError("Esp stopped sending frames -> It stopped live mode on its own \n(probably because it can't handle this number of channels + sample rate)")
 
             #  if CRC check failed, try to resynchronize with the next valid frame
@@ -299,10 +291,6 @@ class ScientISST:
             else:
                 raise NotSupportedError()
 
-
-        if self.__f:
-            self.__writeFramesFile(frames)
-
         return frames
 
     def stop(self):
@@ -333,8 +321,6 @@ class ScientISST:
         # Cleanup existing data in bluetooth socket
         self.__clear()
 
-        if self.__f:
-            self.__closeFile()
 
     def battery(self, value=0):
         """
@@ -549,31 +535,6 @@ class ScientISST:
             raise NotSupportedError()
 
         return int(packet_size)
-
-    def __initFile(self, filename):
-        self.__f = open(filename, "w")
-        header = "NSeq, I1, I2, O1, O2, "
-        for i in range(self.__num_chs):
-            ch = self.__chs[i]
-            if ch == AX1 or ch == AX2:
-                if i == self.__num_chs - 1:
-                    header += "AX{}".format(ch)
-                else:
-                    header += "AX{}, ".format(ch)
-            else:
-                if i == self.__num_chs - 1:
-                    header += "AI{}".format(ch)
-                else:
-                    header += "AI{}, ".format(ch)
-        self.__f.write(header + "\n")
-
-    def __writeFramesFile(self, frames):
-        self.__f.write("\n".join(map(str,frames))+ "\n")
-
-
-    def __closeFile(self):
-        self.__f.close()
-
 
     def __changeAPI(self, api):
         if self.__num_chs and self.__num_chs != 0:
