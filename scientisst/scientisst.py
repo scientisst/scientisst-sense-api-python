@@ -245,7 +245,7 @@ class ScientISST:
                 if not bf[-1]:
                     return list(filter(lambda frame: frame, frames))   #  a timeout has occurred
 
-            f = Frame()
+            f = Frame(self.__num_chs)
             frames[it] = f
             if self.__api_mode == API_MODE_SCIENTISST:
                 # Get seq number and IO states
@@ -260,7 +260,7 @@ class ScientISST:
 
                     # If it's an AX channel
                     if curr_ch == AX1 or curr_ch == AX2:
-                        f.a[curr_ch-1] = (
+                        f.a[i] = (
                             int.from_bytes(bf[byte_it : byte_it + 4], byteorder="little") & 0xFFFFFF
                         )
                         byte_it += 3
@@ -268,14 +268,14 @@ class ScientISST:
                     # If it's an AI channel
                     else:
                         if not mid_frame_flag:
-                            f.a[curr_ch - 1] = (
+                            f.a[i] = (
                                 int.from_bytes(bf[byte_it : byte_it + 2], byteorder="little")
                                 & 0xFFF
                             )
                             byte_it += 1
                             mid_frame_flag = 1
                         else:
-                            f.a[curr_ch - 1] = (
+                            f.a[i] = (
                                 int.from_bytes(bf[byte_it : byte_it + 2], byteorder="little") >> 4
                             )
                             byte_it += 2
