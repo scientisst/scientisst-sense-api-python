@@ -5,6 +5,11 @@ from scientisst.scientisst import *
 from threading import Timer
 import sys
 from argparse import ArgumentParser
+from threading import Thread, Event, Lock
+from queue import Queue
+
+from pylsl import StreamInfo, StreamOutlet, local_clock
+
 
 recording=False
 
@@ -17,10 +22,8 @@ def stop(scientisst):
     recording=False
     scientisst.stop()
     scientisst.disconnect()
-    sys.exit(0)
 
-if __name__ == "__main__":
-
+def main(argv):
     usage = "%(prog)s [args] address"
     description = "description: The program connects to the ScientISST Sense device and starts an acquisition, providing the option to store the received data in a .csv file."
     parser = ArgumentParser(usage=usage, description=description)
@@ -71,6 +74,14 @@ if __name__ == "__main__":
         help="don't print ScientISST frames",
         )
     parser.add_argument(
+        '-s',
+        '--lsl',
+        dest='stream',
+        action='store_true',
+        default=False,
+        help="stream data using Lab Streaming Layer protocol"
+        )
+    parser.add_argument(
         '-v',
         '--verbose',
         dest='log',
@@ -88,17 +99,81 @@ if __name__ == "__main__":
     else:
         num_frames = args.fs // 5
 
+    if args.stream:
+        # create LSL stream info
+        info = StreamInfo("ScientISST Sense","RAW",len(args.channel),args.fs,"int32")
+
+        lsl_buffer = Queue()
+        event = Event()
+        t = Thread(target=send_lsp, args=(info, lsl_buffer, event,num_frames))
+        data_lock = Lock()
+
+
+
     scientisst.start(args.fs, args.channel, args.output, False)
+    if args.stream:
+        t.start()
+
     recording = True
     print("Start acquisition")
 
+    stream=False
     if args.duration>0:
         run_scheduled_task(scientisst,args.duration)
     try:
         while recording:
             frames = scientisst.read(num_frames)
+            # print([frame.seq for frame in frames])
+            if args.stream:
+                with data_lock:
+                    lsl_buffer.put(frames)
             if args.verbose:
                 print(frames[0])
     except KeyboardInterrupt:
-        print("Stop acquisition")
-        stop(scientisst)
+        pass
+    print("Stop acquisition")
+    if args.stream:
+        event.set()
+    stop(scientisst)
+    sys.exit(0)
+
+def send_lsp(info, buffer, event,num_frames):
+    data_lock = Lock()
+    # make outlet
+    outlet = StreamOutlet(info,chunk_size=num_frames)
+
+    timestamp = local_clock()
+    previous_index = -1
+    dt = 1/info.nominal_srate()
+    frames = None
+
+    print("Start LSL stream")
+    while not event.is_set():
+        with data_lock:
+            if not buffer.empty():
+                frames = buffer.get()
+        if frames:
+            # print([frame.seq for frame in frames])
+            chunk = [[val for val in frame.a if val is not None] for frame in frames]
+
+            current_index = frames[-1].seq
+            lost_frames = current_index - ((previous_index + num_frames) & 15)
+
+            if lost_frames>1:
+                print("Lost frames: {}".format(lost_frames))
+                timestamp = local_clock()
+            else:
+                timestamp += (num_frames+lost_frames) * dt
+
+            previous_index = current_index
+            outlet.push_chunk(chunk, timestamp)
+            # outlet.push_chunk(chunk)
+            frames = None
+        else:
+            time.sleep(0.1)
+
+    print("Stop LSL stream")
+
+
+if __name__ == "__main__":
+    main(sys.argv)
