@@ -3,7 +3,6 @@
 import sys
 from scientisst.scientisst import *
 from threading import Timer
-import sys
 from argparse import ArgumentParser
 from threading import Thread, Event
 from queue import Queue
@@ -18,9 +17,16 @@ def stop(stop_event):
     stop_event.set()
 
 def main(argv):
+    class MyParser(ArgumentParser):
+        def error(self, message):
+            sys.stderr.write('error: %s\n\n' % message)
+            self.print_help()
+            sys.exit(2)
+
     usage = "%(prog)s [args] address"
     description = "description: The program connects to the ScientISST Sense device and starts an acquisition, providing the option to store the received data in a .csv file."
-    parser = ArgumentParser(usage=usage, description=description)
+    parser = MyParser(usage=usage, description=description)
+
     parser.add_argument(
         'address',
         type=str,
