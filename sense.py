@@ -60,20 +60,20 @@ def main(argv):
         default=None,
         )
     parser.add_argument(
-        '-q',
-        '--quiet',
-        action='store_false',
-        dest='verbose',
-        default=True,
-        help="don't print ScientISST frames",
-        )
-    parser.add_argument(
         '-s',
         '--lsl',
         dest='stream',
         action='store_true',
         default=False,
         help="stream data using Lab Streaming Layer protocol"
+        )
+    parser.add_argument(
+        '-q',
+        '--quiet',
+        action='store_false',
+        dest='verbose',
+        default=True,
+        help="don't print ScientISST frames",
         )
     parser.add_argument(
         '-v',

@@ -28,19 +28,19 @@ usage: sense.py [args] address
 
 description: The program connects to the ScientISST Sense device and starts an acquisition, providing the option to store the received data in a .csv file.
 
-positional arguments:
-  address               Linux: bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port
+positional arguments:  address               Linux: bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port
 
 optional arguments:
   -h, --help            show this help message and exit
   -f FS, --frequency FS
                         sampling frequency, default: 1000
-  -c CHANNEL [CHANNEL ...], --channels CHANNEL [CHANNEL ...]
+  -c CHANNELS [CHANNELS ...], --channels CHANNELS [CHANNELS ...]
                         analog channels, default: "1 2 3 4 5 6"
   -d DURATION, --duration DURATION
                         duration in seconds, default: unlimited
   -o OUTPUT, --output OUTPUT
                         write report to output file, default: None
+  -s, --lsl             stream data using Lab Streaming Layer protocol
   -q, --quiet           don't print ScientISST frames
   -v, --verbose         log sent/received bytes
 ```
