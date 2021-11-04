@@ -10,14 +10,12 @@ from queue import Queue
 
 from pylsl import StreamInfo, StreamOutlet, local_clock
 
-
-def run_scheduled_task(scientisst,DURATION):
-    timer = Timer(DURATION, stop, [scientisst])
+def run_scheduled_task(DURATION, stop_event):
+    timer = Timer(DURATION, stop, [stop_event])
     timer.start()
 
-def stop(scientisst):
-    scientisst.stop()
-    scientisst.disconnect()
+def stop(stop_event):
+    stop_event.set()
 
 def main(argv):
     usage = "%(prog)s [args] address"
@@ -111,19 +109,19 @@ def main(argv):
         file_thread  = Thread(target=__write_frames, args=(f, file_buffer, file_event))
         file_thread.start()
 
+    stop_event = Event()
 
     scientisst.start(args.fs, args.channels)
     if args.stream:
         lsl_thread.start()
 
-    recording = True
     print("Start acquisition")
 
     stream=False
     if args.duration>0:
-        run_scheduled_task(scientisst,args.duration)
+        run_scheduled_task(args.duration, stop_event)
     try:
-        while True:
+        while not stop_event.is_set():
             frames = scientisst.read(num_frames)
             # print([frame.seq for frame in frames])
             if args.stream:
@@ -139,7 +137,10 @@ def main(argv):
         stream_event.set()
     if args.output:
         file_event.set()
-    stop(scientisst)
+
+    scientisst.stop()
+    scientisst.disconnect()
+
     sys.exit(0)
 
 
