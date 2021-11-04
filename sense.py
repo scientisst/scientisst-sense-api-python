@@ -102,7 +102,7 @@ def main(argv):
 
     if args.stream:
         # create LSL stream info
-        info = StreamInfo("ScientISST Sense","RAW",len(args.channels),args.fs,"int32")
+        info = StreamInfo("ScientISST Sense", "RAW", len(args.channels), args.fs, "int32", args.address)
 
         lsl_buffer = Queue()
         stream_event = Event()
