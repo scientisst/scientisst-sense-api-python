@@ -1,5 +1,6 @@
 from sys import platform
-if platform=='linux':
+
+if platform == "linux":
     import socket
 else:
     import serial
@@ -52,13 +53,21 @@ class ScientISST:
     __chs = [None] * 8
     __log = False
 
-    def __init__(self, address, serial_speed = 115200, log=False, api=API_MODE_SCIENTISST):
+    def __init__(
+        self, address, serial_speed=115200, log=False, api=API_MODE_SCIENTISST
+    ):
 
-        if not re.match("[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", address.lower()):
-            raise InvalidAddressError();
+        if not re.match(
+            "[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", address.lower()
+        ):
+            raise InvalidAddressError()
 
-        if api != API_MODE_SCIENTISST and api != API_MODE_JSON and api != API_MODE_BITALINO:
-            raise InvalidParameterError();
+        if (
+            api != API_MODE_SCIENTISST
+            and api != API_MODE_JSON
+            and api != API_MODE_BITALINO
+        ):
+            raise InvalidParameterError()
 
         self.address = address
         self.speed = serial_speed
@@ -66,12 +75,16 @@ class ScientISST:
 
         print("Connecting to device...")
         # Create the client socket
-        if platform == 'linux':
-            self.__socket = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+        if platform == "linux":
+            self.__socket = socket.socket(
+                socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM
+            )
             self.__socket.settimeout(TIMEOUT_IN_SECONDS)
             self.__socket.connect((address, 1))
         else:
-            self.__serial = serial.Serial(address, serial_speed, timeout=TIMEOUT_IN_SECONDS)
+            self.__serial = serial.Serial(
+                address, serial_speed, timeout=TIMEOUT_IN_SECONDS
+            )
 
         print("Connected!")
 
@@ -104,7 +117,9 @@ class ScientISST:
             result = self.__recv(1)
             if result:
                 if len(version) >= headerLen:
-                    if (self.__api_mode == API_MODE_BITALINO and result == b"\n") or result == b"\x00":
+                    if (
+                        self.__api_mode == API_MODE_BITALINO and result == b"\n"
+                    ) or result == b"\x00":
                         break
                     elif result != b"\n":
                         version += result.decode("utf-8")
@@ -123,7 +138,10 @@ class ScientISST:
         return version
 
     def start(
-        self, sample_rate, channels, simulated=False,
+        self,
+        sample_rate,
+        channels,
+        simulated=False,
     ):
         """
         Starts a signal acquisition from the device
@@ -149,7 +167,7 @@ class ScientISST:
         InvalidParameterError : if no valid API value is chosen or an incorrect array of channels is provided.
         """
         if self.__num_chs != 0:
-            raise DeviceNotIdleError();
+            raise DeviceNotIdleError()
 
         # Set API mode
         self.__changeAPI(self.__api_mode)
@@ -157,11 +175,10 @@ class ScientISST:
         self.__sample_rate = sample_rate
         self.__num_chs = 0
 
-
         # Sample rate
         sr = 0b01000011
         sr |= self.__sample_rate << 8
-        self.__send(sr,4)
+        self.__send(sr, 4)
 
         if not channels:  # channels is empty
             chMask = 0xFF  #  all 8 analog channels
@@ -192,7 +209,6 @@ class ScientISST:
         self.__send(cmd)
 
         self.__packet_size = self.__getPacketSize()
-
 
     def read(self, num_frames):
         """
@@ -225,7 +241,9 @@ class ScientISST:
             mid_frame_flag = 0
             bf = list(self.__recv(self.__packet_size))
             if not bf:
-                raise UnknownError("Esp stopped sending frames -> It stopped live mode on its own \n(probably because it can't handle this number of channels + sample rate)")
+                raise UnknownError(
+                    "Esp stopped sending frames -> It stopped live mode on its own \n(probably because it can't handle this number of channels + sample rate)"
+                )
 
             #  if CRC check failed, try to resynchronize with the next valid frame
             while not self.__checkCRC4(bf, self.__packet_size):
@@ -235,7 +253,9 @@ class ScientISST:
                 bf[-1] = int.from_bytes(result, "big")
 
                 if not bf[-1]:
-                    return list(filter(lambda frame: frame, frames))   #  a timeout has occurred
+                    return list(
+                        filter(lambda frame: frame, frames)
+                    )  #  a timeout has occurred
 
             f = Frame(self.__num_chs)
             frames[it] = f
@@ -246,14 +266,17 @@ class ScientISST:
                     f.digital[i] = (bf[-2] & (0x80 >> i)) != 0
 
                 # Get channel values
-                byte_it=0
+                byte_it = 0
                 for i in range(self.__num_chs):
                     curr_ch = self.__chs[self.__num_chs - 1 - i]
 
                     # If it's an AX channel
                     if curr_ch == AX1 or curr_ch == AX2:
                         f.a[i] = (
-                            int.from_bytes(bf[byte_it : byte_it + 4], byteorder="little") & 0xFFFFFF
+                            int.from_bytes(
+                                bf[byte_it : byte_it + 4], byteorder="little"
+                            )
+                            & 0xFFFFFF
                         )
                         byte_it += 3
 
@@ -261,14 +284,19 @@ class ScientISST:
                     else:
                         if not mid_frame_flag:
                             f.a[i] = (
-                                int.from_bytes(bf[byte_it : byte_it + 2], byteorder="little")
+                                int.from_bytes(
+                                    bf[byte_it : byte_it + 2], byteorder="little"
+                                )
                                 & 0xFFF
                             )
                             byte_it += 1
                             mid_frame_flag = 1
                         else:
                             f.a[i] = (
-                                int.from_bytes(bf[byte_it : byte_it + 2], byteorder="little") >> 4
+                                int.from_bytes(
+                                    bf[byte_it : byte_it + 2], byteorder="little"
+                                )
+                                >> 4
                             )
                             byte_it += 2
                             mid_frame_flag = 0
@@ -320,7 +348,6 @@ class ScientISST:
 
         # Cleanup existing data in bluetooth socket
         self.__clear()
-
 
     def battery(self, value=0):
         """
@@ -478,7 +505,6 @@ class ScientISST:
             self.__serial = None
         print("Disconnected")
 
-
     def __getPacketSize(self):
         packet_size = 0
 
@@ -511,25 +537,25 @@ class ScientISST:
         elif self.__api_mode == API_MODE_JSON:
             for i in range(self.__num_chs):
                 # If it's internal ch
-                if self.__chs[i]<=6:
+                if self.__chs[i] <= 6:
                     # sprintf(aux_str, "AI%d", chs[i]);
                     # member_name.SetString(aux_str, d.GetAllocator());
                     # member_value.SetString(value_internal_str, d.GetAllocator());
                     # d.AddMember(member_name, member_value, d.GetAllocator());
-                    packet_size+=3  # AI%d
-                    packet_size+=2  # 0-4095 = 12 bits <= 2 bytes
+                    packet_size += 3  # AI%d
+                    packet_size += 2  # 0-4095 = 12 bits <= 2 bytes
                 else:
-                    packet_size+=3  # AX%d
-                    packet_size+=4  # 0-16777215 = 24 bits <= 4 bytes
+                    packet_size += 3  # AX%d
+                    packet_size += 4  # 0-16777215 = 24 bits <= 4 bytes
             # Add IO state json objects
             # d.AddMember("I1", "0", d.GetAllocator());
             # d.AddMember("I2", "0", d.GetAllocator());
             # d.AddMember("O1", "0", d.GetAllocator());
             # d.AddMember("O2", "0", d.GetAllocator());
-            packet_size += 3    # I1 + 0|1
-            packet_size += 3    # I2 + 0|1
-            packet_size += 3    # O1 + 0|1
-            packet_size += 3    # O1 + 0|1
+            packet_size += 3  # I1 + 0|1
+            packet_size += 3  # I2 + 0|1
+            packet_size += 3  # O1 + 0|1
+            packet_size += 3  # O1 + 0|1
 
         else:
             raise NotSupportedError()
@@ -562,7 +588,7 @@ class ScientISST:
         crc = CRC4tab[crc] ^ (data[-1] >> 4)
         crc = CRC4tab[crc]
 
-        return crc == (data[ - 1] & 0x0F)
+        return crc == (data[-1] & 0x0F)
 
     def __send(self, command, nrOfBytes=None):
         """
@@ -575,19 +601,22 @@ class ScientISST:
                 )
             else:
                 command = b"\x00"
-        if nrOfBytes and len(command)<nrOfBytes:
-            for _ in range(nrOfBytes-len(command)):
+        if nrOfBytes and len(command) < nrOfBytes:
+            for _ in range(nrOfBytes - len(command)):
                 command += b"\x00"
         # if self.__serial:
         time.sleep(0.150)
         if self.__log:
-            print("{} bytes sent: ".format(len(command))+ " ".join("{:02x}".format(c) for c in command))
+            print(
+                "{} bytes sent: ".format(len(command))
+                + " ".join("{:02x}".format(c) for c in command)
+            )
         if self.__socket:
             self.__socket.send(command)
         else:
             self.__serial.write(command)
         # else:
-            # raise ContactingDeviceError()
+        # raise ContactingDeviceError()
 
     def __recv(self, nrOfBytes):
         """
@@ -599,10 +628,13 @@ class ScientISST:
         else:
             result = self.__serial.read(nrOfBytes)
         if self.__log:
-            if nrOfBytes>1:
-                print("{} bytes received: ".format(nrOfBytes)+ " ".join("{:02x}".format(c) for c in result))
+            if nrOfBytes > 1:
+                print(
+                    "{} bytes received: ".format(nrOfBytes)
+                    + " ".join("{:02x}".format(c) for c in result)
+                )
             else:
-                print("{} bytes received: {}".format(1,result.hex()))
+                print("{} bytes received: {}".format(1, result.hex()))
         return result
 
     def __clear(self):
