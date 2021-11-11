@@ -7,9 +7,6 @@ from argparse import ArgumentParser
 from threading import Thread, Event
 from queue import Queue
 
-from pylsl import StreamInfo, StreamOutlet, local_clock
-
-
 def run_scheduled_task(DURATION, stop_event):
     timer = Timer(DURATION, stop, [stop_event])
     timer.start()
@@ -104,6 +101,9 @@ def main(argv):
         num_frames = args.fs // 5
 
     if args.stream:
+        # import pylsl
+        from pylsl import StreamInfo, StreamOutlet, local_clock
+
         # create LSL stream info
         info = StreamInfo(
             "ScientISST Sense",
