@@ -268,11 +268,12 @@ class ScientISST:
                 # Get channel values
                 byte_it = 0
                 for i in range(self.__num_chs):
-                    curr_ch = self.__chs[self.__num_chs - 1 - i]
+                    index = self.__num_chs - 1 - i
+                    curr_ch = self.__chs[index]
 
                     # If it's an AX channel
                     if curr_ch == AX1 or curr_ch == AX2:
-                        f.a[i] = (
+                        f.a[index] = (
                             int.from_bytes(
                                 bf[byte_it : byte_it + 4], byteorder="little"
                             )
@@ -283,7 +284,7 @@ class ScientISST:
                     # If it's an AI channel
                     else:
                         if not mid_frame_flag:
-                            f.a[i] = (
+                            f.a[index] = (
                                 int.from_bytes(
                                     bf[byte_it : byte_it + 2], byteorder="little"
                                 )
@@ -292,7 +293,7 @@ class ScientISST:
                             byte_it += 1
                             mid_frame_flag = 1
                         else:
-                            f.a[i] = (
+                            f.a[index] = (
                                 int.from_bytes(
                                     bf[byte_it : byte_it + 2], byteorder="little"
                                 )
