@@ -34,8 +34,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -f FS, --frequency FS
                         sampling frequency, default: 1000
-  -c CHANNELS [CHANNELS ...], --channels CHANNELS [CHANNELS ...]
-                        analog channels, default: "1 2 3 4 5 6"
+  -c CHANNELS, --channels CHANNELS
+                        analog channels, default: 1,2,3,4,5,6
   -d DURATION, --duration DURATION
                         duration in seconds, default: unlimited
   -o OUTPUT, --output OUTPUT

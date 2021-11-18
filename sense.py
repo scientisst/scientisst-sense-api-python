@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 from threading import Thread, Event
 from queue import Queue
 
+
 def run_scheduled_task(DURATION, stop_event):
     timer = Timer(DURATION, stop, [stop_event])
     timer.start()
@@ -44,10 +45,9 @@ def main(argv):
         "-c",
         "--channels",
         dest="channels",
-        type=int,
-        nargs="+",
-        help='analog channels, default: "1 2 3 4 5 6"',
-        default=[1, 2, 3, 4, 5, 6],
+        type=str,
+        help="analog channels, default: 1,2,3,4,5,6",
+        default="1,2,3,4,5,6",
     )
     parser.add_argument(
         "-d",
@@ -90,7 +90,7 @@ def main(argv):
         help="log sent/received bytes",
     )
     args = parser.parse_args()
-    args.channels = sorted(args.channels)
+    args.channels = sorted(map(int, args.channels.split(",")))
 
     scientisst = ScientISST(args.address, log=args.log)
     scientisst.version()
