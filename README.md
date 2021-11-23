@@ -47,7 +47,11 @@ optional arguments:
 
 Simply hit `CTRL-C` when you wish to stop.
 
+Example usage to acquire AI1 at 10Hz sample rate:
 
+```
+python3 sense.py -f 10 -c 1 08:3A:F2:49:AC:D2 -o output.csv
+```
 
 ### Linux
 
