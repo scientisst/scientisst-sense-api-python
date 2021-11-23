@@ -57,10 +57,11 @@ class ScientISST:
         self, address, serial_speed=115200, log=False, api=API_MODE_SCIENTISST
     ):
 
-        if not re.match(
-            "[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", address.lower()
-        ):
-            raise InvalidAddressError()
+        if platform == "linux":
+            if not re.match(
+                "[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", address.lower()
+            ):
+                raise InvalidAddressError()
 
         if (
             api != API_MODE_SCIENTISST
