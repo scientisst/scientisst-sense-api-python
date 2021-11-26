@@ -502,7 +502,7 @@ class ScientISST:
         if self.__socket:
             self.__socket.close()
             self.__socket = None
-        else:
+        elif self.__serial:
             self.__serial.close()
             self.__serial = None
         print("Disconnected")
