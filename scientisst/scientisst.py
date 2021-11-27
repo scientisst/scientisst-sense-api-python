@@ -1,6 +1,6 @@
-from sys import platform
+import sys
 
-if platform == "linux":
+if sys.platform == "linux":
     import socket
 else:
     import serial
@@ -73,9 +73,9 @@ class ScientISST:
         self.speed = serial_speed
         self.__log = log
 
-        print("Connecting to device...")
+        sys.stdout.write("Connecting to {}...\n".format(address))
         # Create the client socket
-        if platform == "linux":
+        if sys.platform == "linux":
             self.__socket = socket.socket(
                 socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM
             )
@@ -86,7 +86,7 @@ class ScientISST:
                 address, serial_speed, timeout=TIMEOUT_IN_SECONDS
             )
 
-        print("Connected!")
+        sys.stdout.write("Connected!\n")
 
         # Set API mode
         self.__changeAPI(api)
@@ -134,7 +134,7 @@ class ScientISST:
             else:
                 return
 
-        print("ScientISST version: {}".format(version))
+        sys.stdout.write("ScientISST version: {}\n".format(version))
         return version
 
     def start(
@@ -504,7 +504,7 @@ class ScientISST:
         else:
             self.__serial.close()
             self.__serial = None
-        print("Disconnected")
+        sys.stdout.write("Disconnected\n")
 
     def __getPacketSize(self):
         packet_size = 0
@@ -608,9 +608,10 @@ class ScientISST:
         # if self.__serial:
         time.sleep(0.150)
         if self.__log:
-            print(
-                "{} bytes sent: ".format(len(command))
-                + " ".join("{:02x}".format(c) for c in command)
+            sys.stdout.write(
+                "{} bytes sent: {}\n".format(
+                    len(command), " ".join("{:02x}".format(c) for c in command)
+                )
             )
         if self.__socket:
             self.__socket.send(command)
@@ -630,12 +631,13 @@ class ScientISST:
             result = self.__serial.read(nrOfBytes)
         if self.__log:
             if nrOfBytes > 1:
-                print(
-                    "{} bytes received: ".format(nrOfBytes)
-                    + " ".join("{:02x}".format(c) for c in result)
+                sys.stdout.write(
+                    "{} bytes received: {}\n".format(
+                        nrOfBytes, " ".join("{:02x}".format(c) for c in result)
+                    )
                 )
             else:
-                print("{} bytes received: {}".format(1, result.hex()))
+                sys.stdout.write("{} bytes received: {}\n".format(1, result.hex()))
         return result
 
     def __clear(self):

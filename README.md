@@ -1,3 +1,4 @@
+
 # scientisst-sense-api-python
 
 The ScientISST SENSE Python API
@@ -21,6 +22,23 @@ git clone https://github.com/scientisst/scientisst-sense-api-python.git
 
 ## Running
 
+### Automatic
+
+1. Pair your device
+2. Run:
+```sh
+python sense.py
+```
+3. Select the device from the list displayed:
+```
+ScientISST devices:
+[1] ScientISST-ab-de - 08:3A:F2:49:AB:DE
+[2] ScientISST-ac-be - 08:3A:F2:49:AC:BE
+Connect to: 
+```
+4. Hit `CTRL-C` when you wish to stop.
+
+### Help
 ```
 $ python sense.py -h
 
@@ -45,15 +63,9 @@ optional arguments:
   -v, --verbose         log sent/received bytes
 ```
 
-Simply hit `CTRL-C` when you wish to stop.
+### Manual
 
-Example usage to acquire AI1 at 10Hz sample rate:
-
-```
-python3 sense.py -f 10 -c 1 08:3A:F2:49:AC:D2 -o output.csv
-```
-
-### Linux
+#### Linux
 
 Pair and trust the ScientISST Sense board:
 
@@ -69,9 +81,7 @@ You can now run the `sense.py` script:
 python sense.py XX:XX:XX:XX:XX
 ```
 
-
-
-### Mac
+#### Mac
 
 First, you need to pair the ScientISST sense device in the Bluetooth Settings section.
 Then, you'll need to find the serial port address using the Terminal:
@@ -89,8 +99,7 @@ python sense.py /dev/tty.ScientISST-XX-XX-SPP_SE
 ```
 
 
-
-### Windows
+#### Windows
 
 Turn the ScientISST Sense board on.
 
@@ -102,6 +111,14 @@ You can now run the `sense.py` script:
 
 ```sh
 python sense.py COMX
+```
+
+## Example
+
+Example usage to acquire AI1 at 10Hz sample rate (Linux):
+
+```
+python3 sense.py -f 10 -c 1 08:3A:F2:49:AC:D2 -o output.csv
 ```
 
 
