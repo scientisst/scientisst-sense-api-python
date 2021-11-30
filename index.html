@@ -310,88 +310,9 @@
         
       
       
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Home
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
       <a href="." class="md-nav__link md-nav__link--active">
         Home
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#dependencies" class="md-nav__link">
-    Dependencies
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installing" class="md-nav__link">
-    Installing
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#running" class="md-nav__link">
-    Running
-  </a>
-  
-    <nav class="md-nav" aria-label="Running">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#linux" class="md-nav__link">
-    Linux
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mac" class="md-nav__link">
-    Mac
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#windows" class="md-nav__link">
-    Windows
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#plot" class="md-nav__link">
-    Plot
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
       
     </li>
   
@@ -584,69 +505,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#dependencies" class="md-nav__link">
-    Dependencies
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installing" class="md-nav__link">
-    Installing
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#running" class="md-nav__link">
-    Running
-  </a>
-  
-    <nav class="md-nav" aria-label="Running">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#linux" class="md-nav__link">
-    Linux
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mac" class="md-nav__link">
-    Mac
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#windows" class="md-nav__link">
-    Windows
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#plot" class="md-nav__link">
-    Plot
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -663,79 +521,17 @@
 
 
 <h1 id="scientisst-sense-api-python">scientisst-sense-api-python</h1>
-<p>The ScientISST SENSE Python API</p>
-<h2 id="dependencies">Dependencies</h2>
+<p>The ScientISST SENSE Python API.</p>
+<p>Here you can find everything about this Python API:</p>
 <ul>
-<li>PySerial</li>
+<li><a href="https://scientisst.github.io/scientisst-sense-api-python/installation/">Installation</a></li>
+<li><a href="https://scientisst.github.io/scientisst-sense-api-python/getting-started/sense/">Getting Started</a></li>
+<li><a href="https://scientisst.github.io/scientisst-sense-api-python/reference/scientisst-reference/">Reference</a></li>
 </ul>
-<p>Install it using <code>pip</code>:</p>
-<div class="highlight"><pre><span></span><code>pip install pyserial
-</code></pre></div>
-<h2 id="installing">Installing</h2>
-<div class="highlight"><pre><span></span><code><span class="c1"># Getting this repository </span>
-git clone https://github.com/scientisst/scientisst-sense-api-python.git
-</code></pre></div>
-<h2 id="running">Running</h2>
-<div class="highlight"><pre><span></span><code>$ python sense.py -h
-
-usage: sense.py [args] address
-
-description: The program connects to the ScientISST Sense device and starts an acquisition, providing the option to store the received data in a .csv file.
-
-positional arguments:  address               Linux: bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -f FS, --frequency FS
-                        sampling frequency, default: 1000
-  -c CHANNELS, --channels CHANNELS
-                        analog channels, default: 1,2,3,4,5,6
-  -d DURATION, --duration DURATION
-                        duration in seconds, default: unlimited
-  -o OUTPUT, --output OUTPUT
-                        write report to output file, default: None
-  -s, --lsl             stream data using Lab Streaming Layer protocol
-  -q, --quiet           don&#39;t print ScientISST frames
-  -v, --verbose         log sent/received bytes
-</code></pre></div>
-<p>Simply hit <code>CTRL-C</code> when you wish to stop.</p>
-<p>Example usage to acquire AI1 at 10Hz sample rate:</p>
-<div class="highlight"><pre><span></span><code>python3 sense.py -f 10 -c 1 08:3A:F2:49:AC:D2 -o output.csv
-</code></pre></div>
-<h3 id="linux">Linux</h3>
-<p>Pair and trust the ScientISST Sense board:</p>
-<div class="highlight"><pre><span></span><code>bluetoothctl
-scan on
-pair XX:XX:XX:XX:XX
-trust XX:XX:XX:XX:XX
-</code></pre></div>
-<p>You can now run the <code>sense.py</code> script:
-<div class="highlight"><pre><span></span><code>python sense.py XX:XX:XX:XX:XX
-</code></pre></div></p>
-<h3 id="mac">Mac</h3>
-<p>First, you need to pair the ScientISST sense device in the Bluetooth Settings section.
-Then, you'll need to find the serial port address using the Terminal:</p>
-<div class="highlight"><pre><span></span><code>ls /dev/tty.ScientISST*
-</code></pre></div>
-<p>Copy the <code>String</code> like: <code>/dev/tty.ScientISST-XX-XX-SPP_SE</code>.</p>
-<p>You can now run the <code>sense.py</code> script:</p>
-<div class="highlight"><pre><span></span><code>python sense.py /dev/tty.ScientISST-XX-XX-SPP_SE
-</code></pre></div>
-<h3 id="windows">Windows</h3>
-<p>Turn the ScientISST Sense board on.</p>
-<p>Now, go to Control Panel &gt; Hardware and Sound &gt; Devices and Printers. Select "Add a device". Select the ScientISST Sense board, hit "next" until its set up.</p>
-<p>While connected to the board, search "Bluetooth settings" on the Control Panel, then go to the "COM ports" tab and check the port name for the <strong>outgoing</strong> entry. Copy the <code>String</code> like: <code>COMX</code></p>
-<p>You can now run the <code>sense.py</code> script:</p>
-<div class="highlight"><pre><span></span><code>python sense.py COMX
-</code></pre></div>
-<h2 id="plot">Plot</h2>
-<p>Dependencies:
-- pandas
-- numpy
-- matplotlib</p>
-<div class="highlight"><pre><span></span><code>python plot_output.py
-</code></pre></div>
-<p><img alt="Example ECG" src="https://raw.githubusercontent.com/scientisst/scientisst-sense-api-py/main/example-plot.png" /></p>
+<p><br>
+<center>
+<img alt="ScientISST Logo" src="img/Scientist_GIF_5.gif" style="width:150px" title="ScientISST" />
+</center></p>
 
   <hr>
 <div class="md-source-file">
