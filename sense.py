@@ -4,7 +4,7 @@ VERSION = "0.0.1"
 
 import serial.tools.list_ports
 import sys
-from scientisst.scientisst import *
+from scientisst import *
 from threading import Timer
 from argparse import ArgumentParser
 from threading import Thread, Event
