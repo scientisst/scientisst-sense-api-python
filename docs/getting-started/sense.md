@@ -1,44 +1,17 @@
+`sense.py` is a script that simplifies the interaction with the ScientISST Sense.
 
-# scientisst-sense-api-python
+It allows the selection of channels, sampling rate, and duration right from the command line.
 
-The ScientISST SENSE Python API
+It also implements file data saving in the background (using a different thread) and also streaming via Lab Streaming Layer (LSL).
 
 ## Dependencies
 
-- PySerial
+- [scientisst][scientisst.scientisst.ScientISST] - ScientISST Sense Python API
+<!--- pyserial-->
+- [pylsl](https://pypi.org/project/pylsl/) (optional) - Used for streaming with LSL
 
-Install it using `pip`:
+## Usage Options
 
-```sh
-pip install pyserial
-```
-
-## Installing
-
-```sh
-# Getting this repository 
-git clone https://github.com/scientisst/scientisst-sense-api-python.git
-```
-
-## Running
-
-### Automatic
-
-1. Pair your device
-2. Run:
-```sh
-python sense.py
-```
-3. Select the device from the list displayed:
-```
-ScientISST devices:
-[1] ScientISST-ab-de - 08:3A:F2:49:AB:DE
-[2] ScientISST-ac-be - 08:3A:F2:49:AC:BE
-Connect to: 
-```
-4. Hit `CTRL-C` when you wish to stop.
-
-### Help
 ```
 $ python sense.py -h
 
@@ -63,9 +36,30 @@ optional arguments:
   -v, --verbose         log sent/received bytes
 ```
 
-### Manual
+## Automatic Selection
 
-#### Linux
+1. Pair your device
+2. Run:
+
+    ```
+    python sense.py
+    ```
+
+3. Select the device from the list displayed:
+
+```
+ScientISST devices:
+[1] ScientISST-ab-de - 08:3A:F2:49:AB:DE
+[2] ScientISST-ac-be - 08:3A:F2:49:AC:BE
+Connect to:
+```
+
+Then hit `CTRL-C` when you wish to stop.
+
+
+## Manual Selection
+
+### Linux
 
 Pair and trust the ScientISST Sense board:
 
@@ -81,7 +75,7 @@ You can now run the `sense.py` script:
 python sense.py XX:XX:XX:XX:XX
 ```
 
-#### Mac
+### Mac
 
 First, you need to pair the ScientISST sense device in the Bluetooth Settings section.
 Then, you'll need to find the serial port address using the Terminal:
@@ -99,7 +93,7 @@ python sense.py /dev/tty.ScientISST-XX-XX-SPP_SE
 ```
 
 
-#### Windows
+### Windows
 
 Turn the ScientISST Sense board on.
 
@@ -109,28 +103,55 @@ While connected to the board, search "Bluetooth settings" on the Control Panel, 
 
 You can now run the `sense.py` script:
 
-```sh
+```
 python sense.py COMX
 ```
 
-## Example
+## Examples
 
-Example usage to acquire AI1 at 10Hz sample rate (Linux):
+### Single Channel
 
+The following snippet will start streaming channel `A1`:
 ```
-python3 sense.py -f 10 -c 1 08:3A:F2:49:AC:D2 -o output.csv
-```
-
-
-## Plot
-
-Dependencies:
-- pandas
-- numpy
-- matplotlib
-
-```sh
-python plot_output.py
+python sense.py -c 1
 ```
 
-![Example ECG](https://raw.githubusercontent.com/scientisst/scientisst-sense-api-py/main/example-plot.png)
+### Frequency
+
+The following snippet will start streaming channel `A1` at 100 Hz:
+```
+python sense.py -c 1 -f 100
+```
+
+### Multiple Channels
+
+The following snippet will start streaming channels `A1`,`A2`,`A3`,`A4`:
+```
+python sense.py -c 1,2,3,4
+```
+
+### Save to File
+
+The following snippet will start recording the default channels (`A1`,`A2`,`A3`,`A4`,`A5`,`A6`) to the file `output.csv`:
+```
+python sense.py -o output.csv
+```
+
+### Duration
+
+The following snippet will start recording the default channels for **10 seconds**:
+```
+python sense.py -o output.csv -d 10
+```
+
+### Lab Streaming Layer
+
+The following snippet will start streaming the default channels using **LSL**:
+```
+python sense.py -s
+```
+
+Visualize the streaming data using:
+```
+python -m pylsl.examples.ReceiveAndPlot
+```

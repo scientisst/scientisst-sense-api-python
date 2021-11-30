@@ -1,7 +1,13 @@
 #!/usr/bin/python
 
+"""
+sense.py
+"""
+
+VERSION = "0.0.1"
+
 import sys
-from scientisst.scientisst import *
+from scientisst import *
 from threading import Timer
 from argparse import ArgumentParser
 from threading import Thread, Event
@@ -30,6 +36,7 @@ def main(argv):
 
     parser.add_argument(
         "address",
+        nargs="?",
         type=str,
         help="Linux: bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port",
     )
@@ -83,6 +90,13 @@ def main(argv):
     )
     parser.add_argument(
         "-v",
+        "--version",
+        dest="version",
+        action="store_true",
+        default=False,
+        help="show sense.py version",
+    )
+    parser.add_argument(
         "--verbose",
         dest="log",
         action="store_true",
@@ -90,9 +104,38 @@ def main(argv):
         help="log sent/received bytes",
     )
     args = parser.parse_args()
+
+    if args.version:
+        sys.stdout.write("sense.py version {}\n".format(VERSION))
+        sys.exit(0)
+
+    if args.address:
+        address = args.address
+    else:
+        options, labels = __get_device_options()
+        if len(options) > 0:
+            sys.stdout.write("ScientISST devices:\n")
+            label_index = 1
+            for label in labels:
+                sys.stdout.write("[{}] {}\n".format(label_index, label))
+                label_index += 1
+            selected_index = 0
+            while selected_index == 0:
+                user_input = input("Connect to: ")
+                try:
+                    selected_index = int(user_input)
+                    if selected_index > len(options):
+                        selected_index = 0
+                        raise ValueError()
+                except ValueError:
+                    sys.stderr.write('"{}" is not a valid index\n'.format(user_input))
+            address = options[selected_index - 1]
+        else:
+            parser.error("No paired device found")
+
     args.channels = sorted(map(int, args.channels.split(",")))
 
-    scientisst = ScientISST(args.address, log=args.log)
+    scientisst = ScientISST(address, log=args.log)
     scientisst.version()
 
     if args.fs == 1:
@@ -133,7 +176,7 @@ def main(argv):
     if args.stream:
         lsl_thread.start()
 
-    print("Start acquisition")
+    sys.stdout.write("Start acquisition\n")
 
     stream = False
     if args.duration > 0:
@@ -141,16 +184,15 @@ def main(argv):
     try:
         while not stop_event.is_set():
             frames = scientisst.read(num_frames)
-            # print([frame.seq for frame in frames])
             if args.stream:
                 lsl_buffer.put(frames)
             if args.output:
                 file_buffer.put(frames)
             if args.verbose:
-                print(frames[0])
+                sys.stdout.write(frames[0])
     except KeyboardInterrupt:
         pass
-    print("Stop acquisition")
+    sys.stdout.write("Stop acquisition\n")
     if args.stream:
         stream_event.set()
     if args.output:
@@ -171,7 +213,7 @@ def __send_lsp(info, buffer, event, num_frames):
     dt = 1 / info.nominal_srate()
     frames = None
 
-    print("Start LSL stream")
+    sys.stdout.write("Start LSL stream\n")
     while not event.is_set():
         if not buffer.empty():
             frames = buffer.get()
@@ -182,7 +224,6 @@ def __send_lsp(info, buffer, event, num_frames):
             lost_frames = current_index - ((previous_index + num_frames) & 15)
 
             if lost_frames > 0:
-                # print("Lost frames: {}".format(lost_frames))
                 timestamp = local_clock()
             else:
                 timestamp += num_frames * dt
@@ -193,12 +234,12 @@ def __send_lsp(info, buffer, event, num_frames):
         else:
             time.sleep(0.2)
 
-    print("Stop LSL stream")
+    sys.stdout.write("Stop LSL stream\n")
 
 
 def __init_file(filename, channels):
     f = open(filename, "w")
-    print("Saving data to {}".format(filename))
+    sys.stdout.write("Saving data to {}\n".format(filename))
 
     header = "NSeq, I1, I2, O1, O2, "
     channel_labels = []
@@ -220,6 +261,71 @@ def __write_frames(f, buffer, event):
         else:
             time.sleep(0.2)
     f.close()
+
+
+def __get_device_options():
+    if sys.platform == "linux":
+        options = __get_linux_bth_devices()
+        return list(map(lambda option: option["addr"], options)), list(
+            map(
+                lambda option: "{} - {}".format(option["name"], option["addr"]), options
+            )
+        )
+    else:
+        import serial.tools.list_ports
+
+        ports = serial.tools.list_ports.comports()
+        options = []
+        labels = []
+        for port, desc, hwid in sorted(ports):
+            if "scientisst" in desc.lower():
+                options += [port]
+                label += ["{} - {}".format(desc, port)]
+        return options, labels
+
+
+def __get_linux_bth_devices():
+    import dbus
+
+    def proxyobj(bus, path, interface):
+        """commodity to apply an interface to a proxy object"""
+        obj = bus.get_object("org.bluez", path)
+        return dbus.Interface(obj, interface)
+
+    def filter_by_interface(objects, interface_name):
+        """filters the objects based on their support
+        for the specified interface"""
+        result = []
+        for path in objects.keys():
+            interfaces = objects[path]
+            for interface in interfaces.keys():
+                if interface == interface_name:
+                    result.append(path)
+        return result
+
+    bus = dbus.SystemBus()
+
+    # we need a dbus object manager
+    manager = proxyobj(bus, "/", "org.freedesktop.DBus.ObjectManager")
+    objects = manager.GetManagedObjects()
+
+    # once we get the objects we have to pick the bluetooth devices.
+    # They support the org.bluez.Device1 interface
+    devices = filter_by_interface(objects, "org.bluez.Device1")
+
+    # now we are ready to get the informations we need
+    bt_devices = []
+    for device in devices:
+        obj = proxyobj(bus, device, "org.freedesktop.DBus.Properties")
+        name = str(obj.Get("org.bluez.Device1", "Name"))
+        if "scientisst" in name.lower():
+            bt_devices.append(
+                {
+                    "name": name,
+                    "addr": str(obj.Get("org.bluez.Device1", "Address")),
+                }
+            )
+    return bt_devices
 
 
 if __name__ == "__main__":
