@@ -1,8 +1,11 @@
 #!/bin/python
 
+"""
+sense.py
+"""
+
 VERSION = "0.0.1"
 
-import serial.tools.list_ports
 import sys
 from scientisst import *
 from threading import Timer
@@ -269,6 +272,8 @@ def __get_device_options():
             )
         )
     else:
+        import serial.tools.list_ports
+
         ports = serial.tools.list_ports.comports()
         options = []
         labels = []

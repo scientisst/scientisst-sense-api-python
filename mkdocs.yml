@@ -1,0 +1,80 @@
+site_name: ScientISST Sense API Python
+#site_url: https://example.com/
+repo_url: https://github.com/scientisst/scientisst-sense-api-python
+repo_name: scientisst/scientisst-sense-api-python
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Getting started: 
+    - sense.py: getting-started/sense.md
+    - API: getting-started/api.md
+  - Reference:
+    - ScientISST: reference/scientisst-reference.md
+    - Exceptions: reference/exceptions-reference.md
+    - Frame: reference/frame-reference.md
+    - State: reference/state-reference.md
+
+theme:
+  name: material
+  highlightjs: true
+  hljs_languages:
+      - python
+  logo: img/logo.png
+  favicon: img/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+      primary: amber
+      accent: amber
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+      accent: amber
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+
+extra:
+  social:
+    - icon: fontawesome/solid/globe-europe
+      link: https://scientisst.com
+    - icon: fontawesome/brands/facebook
+      link: https://www.facebook.com/ScientISSThub
+    - icon: fontawesome/brands/github
+      link: https://github.com/ScientISST
+    - icon: fontawesome/brands/instagram
+      link: https://www.instagram.com/scientissthub/
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/scientisst
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/ScientISSThub
+
+extra_css:
+  - css/extra.css
+
+
+copyright: Copyright &copy; 2020 - 2021 ScientISST
+
+plugins:
+  - search
+  - git-revision-date
+  - mkdocstrings:
+      handlers:
+        python:
+          rendering:
+            show_root_heading: yes
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.snippets

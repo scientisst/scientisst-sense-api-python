@@ -32,17 +32,12 @@ AX2 = 8
 
 
 class ScientISST:
-    """
-    ScientISST Device class
+    """ScientISST Device class
 
-    Parameters
-    ----------
-    address : String
-        The device serial port address ("/dev/example")
-    serial_speed : int
-        The serial port bitrate. Default: 115200 bit/s.
-    log : bool
-        If the bytes sent and received should be showed. Default: False.
+    Attributes:
+        address (str): The device serial port address ("/dev/example")
+
+        serial_speed (int, optional): The serial port bitrate.
     """
 
     __serial = None
@@ -56,6 +51,12 @@ class ScientISST:
     def __init__(
         self, address, serial_speed=115200, log=False, api=API_MODE_SCIENTISST
     ):
+        """
+        Args:
+            address (str): The device serial port address ("/dev/example")
+            serial_speed (int, optional): The serial port bitrate in bit/s.
+            log (bool, optional): If the bytes sent and received should be showed.
+        """
 
         if not re.match(
             "[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", address.lower()
@@ -95,14 +96,8 @@ class ScientISST:
         """
         Gets the device firmware version string
 
-        Parameters
-        ----------
-        void
-
-        Returns
-        -------
-        version : string
-            Firmware version
+        Returns:
+            version (str): Firmware version
         """
         if self.__api_mode == API_MODE_BITALINO:
             header = "BITalino"
@@ -146,25 +141,22 @@ class ScientISST:
         """
         Starts a signal acquisition from the device
 
-        Parameters
-        ----------
-        sample_rate : int
-            Sampling rate in Hz. Accepted values are 1, 10, 100 or 1000 Hz.
-        channels : array
-            Set of channels to acquire. Accepted channels are 1...6 for inputs A1...A6.
-        simulated : bool
-            If true, start in simulated mode. Otherwise start in live mode. Default is to start in live mode.
-        api : int
-            The API mode, this API supports the ScientISST and JSON APIs.
+        Args:
+            sample_rate (int): Sampling rate in Hz.
 
-        Returns
-        -------
-        void
+                Accepted values are 1, 10, 100 or 1000 Hz.
 
-        Exceptions
-        ----------
-        DeviceNotIdleError : if the device is already in acquisition mode.
-        InvalidParameterError : if no valid API value is chosen or an incorrect array of channels is provided.
+            channels (list): Set of channels to acquire.
+
+                Accepted channels are 1...6 for inputs A1...A6.
+
+            simulated (bool): If true, start in simulated mode.
+
+                Otherwise start in live mode. Default is to start in live mode.
+
+        Raises:
+            DeviceNotIdleError: If the device is already in acquisition mode.
+            InvalidParameterError: If no valid API value is chosen or an incorrect array of channels is provided.
         """
         if self.__num_chs != 0:
             raise DeviceNotIdleError()
@@ -213,23 +205,19 @@ class ScientISST:
     def read(self, num_frames):
         """
         Reads acquisition frames from the device.
+
         This method returns when all requested frames are received from the device, or when a timeout occurs.
 
-        Parameters
-        ----------
-        num_frames : int
-           Number of frames to retrieve from the device
+        Args:
+            num_frames (int): Number of frames to retrieve from the device
 
-        Returns
-        -------
-        frames : array
-            List of Frame objects retrieved from the device
+        Returns:
+            frames (list): List of [`Frame`][scientisst.frame.Frame] objects retrieved from the device
 
-        Exceptions
-        ----------
-        DeviceNotInAcquisitionError : if the device is not in acquisition mode.
-        NotSupportedError : if the device API is in BITALINO mode
-        UnknownError : if the device stopped sending frames for some unknown reason.
+        Raises:
+            DeviceNotInAcquisitionError: If the device is not in acquisition mode.
+            NotSupportedError: If the device API is in BITALINO mode
+            UnknownError: If the device stopped sending frames for some unknown reason.
         """
 
         frames = [None] * num_frames
@@ -326,17 +314,8 @@ class ScientISST:
         """
         Stops a signal acquisition.
 
-        Parameters
-        ----------
-        void
-
-        Returns
-        -------
-        void
-
-        Exceptions
-        ----------
-        DeviceNotInAcquisitionError : if the device is not in acquisition mode.
+        Raises:
+            DeviceNotInAcquisitionError: If the device is not in acquisition mode.
         """
         if self.__num_chs == 0:
             raise DeviceNotInAcquisitionError()
@@ -354,24 +333,18 @@ class ScientISST:
         """
         Sets the battery voltage threshold for the low-battery LED.
 
-        Parameters
-        ----------
-        value : int
-            Battery voltage threshold. Default value is 0.
-            Value | Voltage Threshold
-            ----- | -----------------
-                0 |   3.4 V
-             ...  |   ...
-               63 |   3.8 V
+        Args:
+            value (int): Battery voltage threshold. Default value is 0.
 
-        Returns
-        -------
-        void
+                Value | Voltage Threshold
+                ----- | -----------------
+                    0 |   3.4 V
+                 ...  |   ...
+                   63 |   3.8 V
 
-        Exceptions
-        ----------
-        DeviceNotIdleError : if the device is in acquisition mode.
-        InvalidParameterError : if an invalid battery threshold value is given.
+        Raises:
+            DeviceNotIdleError: If the device is in acquisition mode.
+            InvalidParameterError: If an invalid battery threshold value is given.
         """
         if self.__num_chs != 0:
             raise DeviceNotIdleError()
@@ -387,18 +360,11 @@ class ScientISST:
         """
         Assigns the digital outputs states.
 
-        Parameters
-        ----------
-        digital_output : array
-            Vector of booleans to assign to digital outputs, starting at first output (O1).
+        Args:
+            digital_output (list): Vector of booleans to assign to digital outputs, starting at first output (O1).
 
-        Returns
-        -------
-        void
-
-        Exceptions
-        ----------
-        InvalidParameterError : if the length of the digital_output array is different from 2.
+        Raises:
+            InvalidParameterError: If the length of the digital_output array is different from 2.
         """
         length = len(digital_output)
 
@@ -415,20 +381,13 @@ class ScientISST:
 
     def dac(self, pwm_output):
         """
-        Assigns the analog (PWM) output value (%ScientISST 2 only).
+        Assigns the analog (PWM) output value (ScientISST 2 only).
 
-        Parameters
-        ----------
-        pwm_output : int
-            Analog output value to set (0...255).
+        Args:
+            pwm_output (int): Analog output value to set (0...255).
 
-        Returns
-        -------
-        void
-
-        Exceptions
-        ----------
-        InvalidParameterError : if the pwm_output value is outside of its range, 0-255.
+        Raises:
+            InvalidParameterError: If the pwm_output value is outside of its range, 0-255.
         """
         if pwm_output < 0 or pwm_output > 255:
             raise InvalidParameterError()
@@ -443,19 +402,12 @@ class ScientISST:
         """
         Returns current device state (%ScientISST 2 only).
 
-        Parameters
-        ----------
-        void
+        Returns:
+            state (State): Current device [`State`][scientisst.state.State]
 
-        Returns
-        -------
-        state : State
-            Current device state
-
-        Exceptions
-        ----------
-        DeviceNotIdleError : if the device is in acquisition mode.
-        ContactingDeviceError : if there is an error contacting the device.
+        Raises:
+            DeviceNotIdleError: If the device is in acquisition mode.
+            ContactingDeviceError: If there is an error contacting the device.
         """
         if self.__num_chs != 0:
             raise DeviceNotIdleError()
@@ -487,14 +439,6 @@ class ScientISST:
     def disconnect(self):
         """
         Disconnects from a ScientISST device. If an aquisition is running, it is stopped
-
-        Parameters
-        ----------
-        void
-
-        Returns
-        -------
-        void
         """
         if self.__num_chs != 0:
             self.stop()
