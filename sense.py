@@ -189,7 +189,7 @@ def main(argv):
             if args.output:
                 file_buffer.put(frames)
             if args.verbose:
-                sys.stdout.write(frames[0])
+                sys.stdout.write("{}\n".format(frames[0]))
     except KeyboardInterrupt:
         pass
     sys.stdout.write("Stop acquisition\n")
