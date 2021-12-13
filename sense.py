@@ -278,9 +278,9 @@ def __get_device_options():
         options = []
         labels = []
         for port, desc, hwid in sorted(ports):
-            if "scientisst" in desc.lower():
+            if "scientisst" in port.lower():
                 options += [port]
-                label += ["{} - {}".format(desc, port)]
+                labels += ["{} - {}".format(desc, port)]
         return options, labels
 
 
