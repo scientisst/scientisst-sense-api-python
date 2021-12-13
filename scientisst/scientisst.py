@@ -58,7 +58,7 @@ class ScientISST:
             log (bool, optional): If the bytes sent and received should be showed.
         """
 
-        if platform == "linux":
+        if sys.platform == "linux":
             if not re.match(
                 "[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", address.lower()
             ):
