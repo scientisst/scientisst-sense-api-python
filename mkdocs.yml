@@ -6,10 +6,10 @@ repo_name: scientisst/scientisst-sense-api-python
 nav:
   - Home: index.md
   - Installation: installation.md
-  - Getting started: 
+  - Getting started:
     - sense.py: getting-started/sense.md
     - API: getting-started/api.md
-  - Reference:
+  - API Reference:
     - ScientISST: reference/scientisst-reference.md
     - Exceptions: reference/exceptions-reference.md
     - Frame: reference/frame-reference.md
