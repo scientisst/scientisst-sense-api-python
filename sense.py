@@ -182,6 +182,9 @@ def main(argv):
     if args.duration > 0:
         run_scheduled_task(args.duration, stop_event)
     try:
+        if args.verbose:
+            header = __get_header(args.channels)
+            sys.stdout.write("{}\n".format(header))
         while not stop_event.is_set():
             frames = scientisst.read(num_frames)
             if args.stream:
@@ -237,19 +240,25 @@ def __send_lsp(info, buffer, event, num_frames):
     sys.stdout.write("Stop LSL stream\n")
 
 
+def __get_header(channels):
+    header = "NSeq\tI1\tI2\tO1\tO2\t"
+    channel_labels = []
+    for ch in channels:
+        if ch == AX1 or ch == AX2:
+            channel_labels += ["AX{}".format(ch)]
+        else:
+            channel_labels += ["AI{}".format(ch)]
+    header += "\t".join(channel_labels)
+    return header
+
+
 def __init_file(filename, channels):
     f = open(filename, "w")
     sys.stdout.write("Saving data to {}\n".format(filename))
 
-    header = "NSeq, I1, I2, O1, O2, "
-    channel_labels = []
-    for ch in channels:
-        if ch == AX1 or ch == AX2:
-            channel_labels += "AX{}".format(ch)
-        else:
-            channel_labels += "AI{}".format(ch)
-    header += ", ".join(channel_labels)
-    f.write(header + "\n")
+    header = __get_header(channels)
+
+    f.write("#{}\n".format(header))
     return f
 
 

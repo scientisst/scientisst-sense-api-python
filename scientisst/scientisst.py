@@ -252,7 +252,7 @@ class ScientISST:
                 # Get seq number and IO states
                 f.seq = bf[-1] >> 4
                 for i in range(4):
-                    f.digital[i] = (bf[-2] & (0x80 >> i)) != 0
+                    f.digital[i] = bf[-2] & (0x80 >> i)
 
                 # Get channel values
                 byte_it = 0
