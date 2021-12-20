@@ -242,9 +242,10 @@ def __send_lsp(info, buffer, event, num_frames):
 
 def __get_metadata(address, fs, channels):
     metadata = {
-        "Address": address,
-        "Channels": __get_channel_labels(channels),
-        "Channels indexes": channels,
+        "Channels": channels,
+        "Channels indexes": list(map(lambda x: x + 4, channels)),
+        "Channels labels": __get_channel_labels(channels),
+        "Device": address,
         "Header": __get_header(channels),
         "Resolution (bits)": [4, 1, 1, 1, 1] + __get_channel_resolutions(channels),
         "Sampling Rate (Hz)": fs,
