@@ -4,7 +4,7 @@
 sense.py
 """
 
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 
 import sys
 from scientisst import *
@@ -164,7 +164,7 @@ def main(argv):
         )
 
     if args.output:
-        f = __init_file(args.output, args.channels)
+        f = __init_file(args.output, address, args.fs, args.channels)
         file_buffer = Queue()
         file_event = Event()
         file_thread = Thread(target=__write_frames, args=(f, file_buffer, file_event))
@@ -183,7 +183,7 @@ def main(argv):
         run_scheduled_task(args.duration, stop_event)
     try:
         if args.verbose:
-            header = __get_header(args.channels)
+            header = "\t".join(__get_header(args.channels))
             sys.stdout.write("{}\n".format(header))
         while not stop_event.is_set():
             frames = scientisst.read(num_frames)
@@ -240,24 +240,53 @@ def __send_lsp(info, buffer, event, num_frames):
     sys.stdout.write("Stop LSL stream\n")
 
 
-def __get_header(channels):
-    header = "NSeq\tI1\tI2\tO1\tO2\t"
+def __get_metadata(address, fs, channels):
+    metadata = {
+        "Address": address,
+        "Channels": __get_channel_labels(channels),
+        "Channels indexes": channels,
+        "Header": __get_header(channels),
+        "Resolution (bits)": [4, 1, 1, 1, 1] + __get_channel_resolutions(channels),
+        "Sampling Rate (Hz)": fs,
+        "Timestamp": time.time(),
+    }
+    return metadata
+
+
+def __get_channel_resolutions(channels):
+    channel_resolutions = []
+    for ch in channels:
+        if ch == AX1 or ch == AX2:
+            channel_resolutions += [24]
+        else:
+            channel_resolutions += [12]
+    return channel_resolutions
+
+
+def __get_channel_labels(channels):
     channel_labels = []
     for ch in channels:
         if ch == AX1 or ch == AX2:
             channel_labels += ["AX{}".format(ch)]
         else:
             channel_labels += ["AI{}".format(ch)]
-    header += "\t".join(channel_labels)
+    return channel_labels
+
+
+def __get_header(channels):
+    header = ["NSeq", "I1", "I2", "O1", "O2"]
+    header += __get_channel_labels(channels)
     return header
 
 
-def __init_file(filename, channels):
+def __init_file(filename, address, fs, channels):
     f = open(filename, "w")
     sys.stdout.write("Saving data to {}\n".format(filename))
 
-    header = __get_header(channels)
+    metadata = __get_metadata(address, fs, channels)
+    header = "\t".join(metadata["Header"])
 
+    f.write("#{}\n".format(metadata))
     f.write("#{}\n".format(header))
     return f
 
