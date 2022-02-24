@@ -1,5 +1,6 @@
 import sys
 
+
 if sys.platform == "linux":
     import socket
 else:
@@ -12,6 +13,7 @@ from math import log2
 from scientisst.frame import *
 from scientisst.state import *
 from scientisst.exceptions import *
+from scientisst.esp_adc.esp_adc import *
 
 TIMEOUT_IN_SECONDS = 10
 
@@ -93,9 +95,9 @@ class ScientISST:
         # Set API mode
         self.__changeAPI(api)
 
-    def version(self):
+    def version_and_adc_chars(self):
         """
-        Gets the device firmware version string
+        Gets the device firmware version string and esp_adc_characteristics
 
         Returns:
             version (str): Firmware version
@@ -130,7 +132,33 @@ class ScientISST:
             else:
                 return
 
+        # We only want to recieve the 6 first ints of the adc1_chars
+        result = self.__recv(24)
+        adc1_chars = EspAdcCalChars(result)
+
+        # Initialize fields for lookup table if necessary
+        if adc1_chars.atten == ADC_ATTEN_DB_11:
+            if adc1_chars.adc_num == ADC_UNIT_1:
+                adc1_chars.low_curve = LUT_ADC1_LOW
+            else:
+                adc1_chars.low_curve = LUT_ADC2_LOW
+
+            if adc1_chars.adc_num == ADC_UNIT_1:
+                adc1_chars.high_curve = LUT_ADC1_HIGH
+            else:
+                adc1_chars.high_curve = LUT_ADC2_HIGH
+        else:
+            adc1_chars.low_curve = 0
+            adc1_chars.high_curve = 0
+
+        self.__adc1_chars = adc1_chars
+
         sys.stdout.write("ScientISST version: {}\n".format(version))
+        sys.stdout.write("ScientISST Board Vref: {}\n".format(adc1_chars.vref))
+        sys.stdout.write(
+            "ScientISST Board ADC Attenuation Mode: {}\n".format(adc1_chars.atten)
+        )
+
         return version
 
     def start(
@@ -164,6 +192,9 @@ class ScientISST:
 
         # Set API mode
         self.__changeAPI(self.__api_mode)
+
+        # get device version string and adc characteristics
+        self.version_and_adc_chars()
 
         self.__sample_rate = sample_rate
         self.__num_chs = 0
@@ -203,7 +234,7 @@ class ScientISST:
 
         self.__packet_size = self.__getPacketSize()
 
-    def read(self, num_frames):
+    def read(self, num_frames, convert=True):
         """
         Reads acquisition frames from the device.
 
@@ -211,6 +242,7 @@ class ScientISST:
 
         Args:
             num_frames (int): Number of frames to retrieve from the device
+            convert (bool): Convert from raw to mV
 
         Returns:
             frames (list): List of [`Frame`][scientisst.frame.Frame] objects retrieved from the device
@@ -290,6 +322,13 @@ class ScientISST:
                             )
                             byte_it += 2
                             mid_frame_flag = 0
+                        if convert:
+                            f.mv[index] = int(
+                                esp_adc_cal_raw_to_voltage(
+                                    f.a[index], self.__adc1_chars
+                                )
+                                * VOLT_DIVIDER_FACTOR
+                            )
             elif self.__api_mode == API_MODE_JSON:
                 print(bf)
             # d.Parse((const char*)buffer);

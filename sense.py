@@ -34,7 +34,6 @@ def main():
     args.channels = sorted(map(int, args.channels.split(",")))
 
     scientisst = ScientISST(address, log=args.log)
-    scientisst.version()
 
     if args.fs == 1:
         num_frames = 1
@@ -52,7 +51,9 @@ def main():
         )
 
     if args.output:
-        file_writer = FileWriter(args.output, address, args.fs, args.channels)
+        file_writer = FileWriter(
+            args.output, address, args.fs, args.channels, args.convert
+        )
 
     stop_event = Event()
 
@@ -68,10 +69,10 @@ def main():
         run_scheduled_task(args.duration, stop_event)
     try:
         if args.verbose:
-            header = "\t".join(get_header(args.channels)) + "\n"
+            header = "\t".join(get_header(args.channels, args.convert)) + "\n"
             sys.stdout.write(header)
         while not stop_event.is_set():
-            frames = scientisst.read(num_frames)
+            frames = scientisst.read(num_frames, convert=args.convert)
             if args.stream:
                 lsl.put(frames)
             if args.output:

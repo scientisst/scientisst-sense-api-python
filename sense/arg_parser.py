@@ -37,6 +37,14 @@ class ArgParser:
             default="1,2,3,4,5,6",
         )
         self.parser.add_argument(
+            "-r",
+            "--raw",
+            action="store_false",
+            dest="convert",
+            default=True,
+            help="do not convert from raw to mV",
+        )
+        self.parser.add_argument(
             "-d",
             "--duration",
             dest="duration",
