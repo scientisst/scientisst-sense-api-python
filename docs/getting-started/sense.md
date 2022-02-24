@@ -19,9 +19,10 @@ usage: sense.py [args] address
 
 description: The program connects to the ScientISST Sense device and starts an acquisition, providing the option to store the received data in a .csv file.
 
-positional arguments:  address               Linux: bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port
+positional arguments:
+  address               Linux: bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -f FS, --frequency FS
                         sampling frequency, default: 1000
@@ -31,9 +32,10 @@ optional arguments:
                         duration in seconds, default: unlimited
   -o OUTPUT, --output OUTPUT
                         write report to output file, default: None
-  -s, --lsl             stream data using Lab Streaming Layer protocol
+  -s, --lsl             stream data using Lab Streaming Layer protocol. Use `python -m pylsl.examples.ReceiveAndPlot` to view stream
   -q, --quiet           don't print ScientISST frames
-  -v, --verbose         log sent/received bytes
+  -v, --version         show sense.py version
+  --verbose             log sent/received bytes
 ```
 
 ## Automatic Selection
