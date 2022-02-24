@@ -32,6 +32,7 @@ options:
                         duration in seconds, default: unlimited
   -o OUTPUT, --output OUTPUT
                         write report to output file, default: None
+  -r, --raw             do not convert from raw to mV
   -s, --lsl             stream data using Lab Streaming Layer protocol. Use `python -m pylsl.examples.ReceiveAndPlot` to view stream
   -q, --quiet           don't print ScientISST frames
   -v, --version         show sense.py version
