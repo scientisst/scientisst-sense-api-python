@@ -12,15 +12,15 @@ class ArgParser:
     def __init__(self):
         usage = "%(prog)s [args] address"
         description = "description: The program connects to the ScientISST Sense device and starts an acquisition, providing the option to store the received data in a .csv file."
-        parser = self.MyParser(usage=usage, description=description)
+        self.parser = self.MyParser(usage=usage, description=description)
 
-        parser.add_argument(
+        self.parser.add_argument(
             "address",
             nargs="?",
             type=str,
             help="Linux: bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port",
         )
-        parser.add_argument(
+        self.parser.add_argument(
             "-f",
             "--frequency",
             dest="fs",
@@ -28,7 +28,7 @@ class ArgParser:
             type=int,
             default=1000,
         )
-        parser.add_argument(
+        self.parser.add_argument(
             "-c",
             "--channels",
             dest="channels",
@@ -36,7 +36,7 @@ class ArgParser:
             help="analog channels, default: 1,2,3,4,5,6",
             default="1,2,3,4,5,6",
         )
-        parser.add_argument(
+        self.parser.add_argument(
             "-d",
             "--duration",
             dest="duration",
@@ -44,7 +44,7 @@ class ArgParser:
             type=int,
             default=0,
         )
-        parser.add_argument(
+        self.parser.add_argument(
             "-o",
             "--output",
             dest="output",
@@ -52,15 +52,15 @@ class ArgParser:
             type=str,
             default=None,
         )
-        parser.add_argument(
+        self.parser.add_argument(
             "-s",
             "--lsl",
             dest="stream",
             action="store_true",
             default=False,
-            help="stream data using Lab Streaming Layer protocol",
+            help="stream data using Lab Streaming Layer protocol. Use `python -m pylsl.examples.ReceiveAndPlot` to view stream",
         )
-        parser.add_argument(
+        self.parser.add_argument(
             "-q",
             "--quiet",
             action="store_false",
@@ -68,7 +68,7 @@ class ArgParser:
             default=True,
             help="don't print ScientISST frames",
         )
-        parser.add_argument(
+        self.parser.add_argument(
             "-v",
             "--version",
             dest="version",
@@ -76,11 +76,14 @@ class ArgParser:
             default=False,
             help="show sense.py version",
         )
-        parser.add_argument(
+        self.parser.add_argument(
             "--verbose",
             dest="log",
             action="store_true",
             default=False,
             help="log sent/received bytes",
         )
-        self.args = parser.parse_args()
+        self.args = self.parser.parse_args()
+
+    def error(self, value):
+        self.parser.error(value)

@@ -26,5 +26,5 @@ class ThreadBuilder:
             else:
                 time.sleep(0.1)
 
-    def thread_method(frames):
+    def thread_method(self, frames):
         pass
