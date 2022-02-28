@@ -1,7 +1,6 @@
 **/__pycache__
 .vscode
-scientisst/__pycache__
 *.csv
 *.txt
-*.pyc
+**/*.pyc
 site/
