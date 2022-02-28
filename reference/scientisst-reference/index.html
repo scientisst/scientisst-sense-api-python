@@ -841,10 +841,16 @@ ScientISST        </code>
                 <span class="n">address</span><span class="p">,</span> <span class="n">serial_speed</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">TIMEOUT_IN_SECONDS</span>
             <span class="p">)</span>
 
-        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Connected!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
         <span class="c1"># Set API mode</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__changeAPI</span><span class="p">(</span><span class="n">api</span><span class="p">)</span>
+
+        <span class="c1"># get device version string and adc characteristics</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_and_adc_chars</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">version</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ContactingDeviceError</span><span class="p">()</span>
+
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Connected!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">version_and_adc_chars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -941,14 +947,7 @@ ScientISST        </code>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__num_chs</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">DeviceNotIdleError</span><span class="p">()</span>
 
-        <span class="c1"># Set API mode</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__changeAPI</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__api_mode</span><span class="p">)</span>
-
-        <span class="c1"># get device version string and adc characteristics</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">version_and_adc_chars</span><span class="p">()</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">__sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__num_chs</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="c1"># Sample rate</span>
         <span class="n">sr</span> <span class="o">=</span> <span class="mb">0b01000011</span>
@@ -1099,7 +1098,10 @@ ScientISST        </code>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">NotSupportedError</span><span class="p">()</span>
 
-        <span class="k">return</span> <span class="n">frames</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span> <span class="o">==</span> <span class="n">num_frames</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">frames</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ContactingDeviceError</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1341,7 +1343,7 @@ ScientISST        </code>
             <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrOfBytes</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">command</span><span class="p">)):</span>
                 <span class="n">command</span> <span class="o">+=</span> <span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span>
         <span class="c1"># if self.__serial:</span>
-        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.150</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.250</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__log</span><span class="p">:</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
                 <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> bytes sent: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -1498,10 +1500,16 @@ ScientISST        </code>
             <span class="n">address</span><span class="p">,</span> <span class="n">serial_speed</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">TIMEOUT_IN_SECONDS</span>
         <span class="p">)</span>
 
-    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Connected!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
     <span class="c1"># Set API mode</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">__changeAPI</span><span class="p">(</span><span class="n">api</span><span class="p">)</span>
+
+    <span class="c1"># get device version string and adc characteristics</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_and_adc_chars</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">version</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ContactingDeviceError</span><span class="p">()</span>
+
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Connected!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -1926,7 +1934,10 @@ ScientISST        </code>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NotSupportedError</span><span class="p">()</span>
 
-    <span class="k">return</span> <span class="n">frames</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span> <span class="o">==</span> <span class="n">num_frames</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">frames</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ContactingDeviceError</span><span class="p">()</span>
 </code></pre></div>
         </details>
     </div>
@@ -2033,14 +2044,7 @@ ScientISST        </code>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__num_chs</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">DeviceNotIdleError</span><span class="p">()</span>
 
-    <span class="c1"># Set API mode</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">__changeAPI</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__api_mode</span><span class="p">)</span>
-
-    <span class="c1"># get device version string and adc characteristics</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">version_and_adc_chars</span><span class="p">()</span>
-
     <span class="bp">self</span><span class="o">.</span><span class="n">__sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">__num_chs</span> <span class="o">=</span> <span class="mi">0</span>
 
     <span class="c1"># Sample rate</span>
     <span class="n">sr</span> <span class="o">=</span> <span class="mb">0b01000011</span>
