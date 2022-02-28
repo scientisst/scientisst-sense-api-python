@@ -40,7 +40,10 @@ class DevicePicker:
             for port, desc, hwid in sorted(ports):
                 if "scientisst" in port.lower():
                     options += [port]
-                    labels += ["{} - {}".format(desc, port)]
+                    label = ""
+                    if desc != "n/a":
+                        label += "{} - ".format(desc)
+                    labels += [label + port]
             return options, labels
 
     def __get_linux_bth_devices(self):

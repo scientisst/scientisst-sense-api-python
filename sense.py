@@ -35,7 +35,7 @@ def main():
 
     scientisst = ScientISST(address, log=args.log)
 
-    if args.fs == 1:
+    if args.fs <= 5:
         num_frames = 1
     else:
         num_frames = args.fs // 5

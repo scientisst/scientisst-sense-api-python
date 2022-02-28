@@ -90,10 +90,16 @@ class ScientISST:
                 address, serial_speed, timeout=TIMEOUT_IN_SECONDS
             )
 
-        sys.stdout.write("Connected!\n")
-
         # Set API mode
         self.__changeAPI(api)
+
+        # get device version string and adc characteristics
+        version = self.version_and_adc_chars()
+
+        if not version:
+            raise ContactingDeviceError()
+
+        sys.stdout.write("Connected!\n")
 
     def version_and_adc_chars(self):
         """
@@ -190,14 +196,7 @@ class ScientISST:
         if self.__num_chs != 0:
             raise DeviceNotIdleError()
 
-        # Set API mode
-        self.__changeAPI(self.__api_mode)
-
-        # get device version string and adc characteristics
-        self.version_and_adc_chars()
-
         self.__sample_rate = sample_rate
-        self.__num_chs = 0
 
         # Sample rate
         sr = 0b01000011
@@ -348,7 +347,10 @@ class ScientISST:
             else:
                 raise NotSupportedError()
 
-        return frames
+        if len(frames) == num_frames:
+            return frames
+        else:
+            raise ContactingDeviceError()
 
     def stop(self):
         """
@@ -590,7 +592,7 @@ class ScientISST:
             for _ in range(nrOfBytes - len(command)):
                 command += b"\x00"
         # if self.__serial:
-        time.sleep(0.150)
+        time.sleep(0.250)
         if self.__log:
             sys.stdout.write(
                 "{} bytes sent: {}\n".format(
