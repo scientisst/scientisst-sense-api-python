@@ -35,10 +35,10 @@ def main():
 
     scientisst = ScientISST(address, log=args.log)
 
-    if args.fs <= 5:
-        num_frames = 1
-    else:
+    if args.fs > 5:
         num_frames = args.fs // 5
+    else:
+        num_frames = args.fs
 
     if args.stream:
         from sense.stream_lsl import StreamLSL
