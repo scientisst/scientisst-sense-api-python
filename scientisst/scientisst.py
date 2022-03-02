@@ -112,35 +112,16 @@ class ScientISST:
             header = "BITalino"
         else:
             header = "ScientISST"
-        headerLen = len(header)
+        header_len = len(header)
 
         cmd = b"\x07"
         self.__send(cmd)
-        version = ""
-        while True:
-            result = self.__recv(1)
-            if result:
-                if len(version) >= headerLen:
-                    if (
-                        self.__api_mode == API_MODE_BITALINO and result == b"\n"
-                    ) or result == b"\x00":
-                        break
-                    elif result != b"\n":
-                        version += result.decode("utf-8")
-                else:
-                    result = result.decode("utf-8")
-                    if result is header[len(version)]:
-                        version += result
-                    else:
-                        version = ""
-                        if result == header[0]:
-                            version += result
-            else:
-                return
 
-        # We only want to recieve the 6 first ints of the adc1_chars
-        result = self.__recv(24)
-        adc1_chars = EspAdcCalChars(result)
+        result = self.__recv(1024)
+        index = result.index(b"\x00")
+        version = result[header_len : index - 1].decode("utf-8")
+
+        adc1_chars = EspAdcCalChars(result[index + 1 :])
 
         # Initialize fields for lookup table if necessary
         if adc1_chars.atten == ADC_ATTEN_DB_11:
