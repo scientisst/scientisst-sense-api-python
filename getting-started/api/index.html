@@ -9,7 +9,7 @@
       
       
       <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.2.3">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.2.4">
     
     
       
@@ -17,7 +17,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.e8d9bf0c.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.2d9f7617.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.e6a45f82.min.css">
@@ -27,6 +27,7 @@
     
     
       
+        
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
@@ -643,12 +644,12 @@
 </code></pre></div>
 <h3 id="acquisition">Acquisition</h3>
 <p>The following snippet starts streaming data from channels <code>A1</code>, <code>A2</code>, and <code>A3</code> at 100 Hz.</p>
-<p>Then, it reads the streaming data in chunks of 20 frames and prints the first <a href="../../reference/frame-reference/#scientisst.frame.Frame"><code>Frame</code></a>.</p>
+<p>Then, it reads the streaming data (by default, for frequencies not too high, 5 times per second) and prints the first <a href="../../reference/frame-reference/#scientisst.frame.Frame"><code>Frame</code></a>.</p>
 <p>After reading 1000 frames, it stops the acquisition.</p>
 <div class="highlight"><pre><span></span><code><span class="n">scientisst</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
 
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">):</span>
-    <span class="n">frames</span> <span class="o">=</span> <span class="n">scientisst</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+    <span class="n">frames</span> <span class="o">=</span> <span class="n">scientisst</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
 <span class="n">scientisst</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
@@ -663,7 +664,7 @@
   <small>
     
       Last update:
-      2021-11-30
+      2022-03-03
     
   </small>
 </div>
@@ -797,7 +798,7 @@
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.bd0b6b67.min.js"}</script>
     
     
-      <script src="../../assets/javascripts/bundle.b88e97c5.min.js"></script>
+      <script src="../../assets/javascripts/bundle.5413a266.min.js"></script>
       
     
   </body>
