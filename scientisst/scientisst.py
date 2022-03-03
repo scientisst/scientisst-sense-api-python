@@ -58,8 +58,9 @@ class ScientISST:
         """
         Args:
             address (str): The device serial port address ("/dev/example")
-            serial_speed (int, optional): The serial port bitrate in bit/s.
-            log (bool, optional): If the bytes sent and received should be showed.
+            serial_speed (int, optional): The serial port bitrate in bit/s
+            log (bool, optional): If the bytes sent and received should be showed
+            api (int): The desired API mode for the device
         """
 
         if sys.platform == "linux":
@@ -106,6 +107,9 @@ class ScientISST:
 
         Returns:
             version (str): Firmware version
+
+        Raises:
+            ContactingDeviceError: If there is an error contacting the device.
         """
         if self.__api_mode == API_MODE_BITALINO:
             header = "BITalino"
@@ -155,8 +159,8 @@ class ScientISST:
         self,
         sample_rate,
         channels,
-        simulated=False,
         reads_per_second=5,
+        simulated=False,
     ):
         """
         Starts a signal acquisition from the device
@@ -170,6 +174,11 @@ class ScientISST:
 
                 Accepted channels are 1...6 for inputs A1...A6.
 
+            reads_per_second (int): Number of times to read the data streaming from the device.
+
+                Accepted values are integers greater than 0.
+
+
             simulated (bool): If true, start in simulated mode.
 
                 Otherwise start in live mode. Default is to start in live mode.
@@ -178,6 +187,8 @@ class ScientISST:
             DeviceNotIdleError: If the device is already in acquisition mode.
             InvalidParameterError: If no valid API value is chosen or an incorrect array of channels is provided.
         """
+        assert int(reads_per_second) > 0
+
         if self.__num_chs != 0:
             raise DeviceNotIdleError()
 
@@ -243,13 +254,13 @@ class ScientISST:
         This method returns when all requested frames are received from the device, or when a timeout occurs.
 
         Args:
-            num_frames (int): Number of frames to retrieve from the device
             convert (bool): Convert from raw to mV
 
         Returns:
             frames (list): List of [`Frame`][scientisst.frame.Frame] objects retrieved from the device
 
         Raises:
+            ContactingDeviceError: If there is an error contacting the device.
             DeviceNotInAcquisitionError: If the device is not in acquisition mode.
             NotSupportedError: If the device API is in BITALINO mode
             UnknownError: If the device stopped sending frames for some unknown reason.
