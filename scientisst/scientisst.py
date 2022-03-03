@@ -32,6 +32,8 @@ AI6 = 6
 AX1 = 7
 AX2 = 8
 
+MAX_BUFFER_SIZE = 4096
+
 
 class ScientISST:
     """ScientISST Device class
@@ -153,6 +155,7 @@ class ScientISST:
         sample_rate,
         channels,
         simulated=False,
+        reads_per_second=5,
     ):
         """
         Starts a signal acquisition from the device
@@ -177,13 +180,6 @@ class ScientISST:
         if self.__num_chs != 0:
             raise DeviceNotIdleError()
 
-        self.__sample_rate = sample_rate
-
-        # Sample rate
-        sr = 0b01000011
-        sr |= self.__sample_rate << 8
-        self.__send(sr, 4)
-
         if not channels:  # channels is empty
             chMask = 0xFF  #  all 8 analog channels
             self.__num_chs = 8
@@ -196,10 +192,18 @@ class ScientISST:
 
                 mask = 1 << (ch - 1)
                 if chMask & mask:
+                    self.__num_chs = 0
                     raise InvalidParameterError()
 
                 chMask |= mask
                 self.__num_chs += 1
+
+        self.__sample_rate = sample_rate
+
+        # Sample rate
+        sr = 0b01000011
+        sr |= self.__sample_rate << 8
+        self.__send(sr, 4)
 
         # Cleanup existing data in bluetooth socket
         self.__clear()
@@ -214,7 +218,24 @@ class ScientISST:
 
         self.__packet_size = self.__getPacketSize()
 
-    def read(self, num_frames, convert=True):
+        self.__bytes_to_read = self.__packet_size * max(
+            sample_rate // reads_per_second, 1
+        )
+        if self.__bytes_to_read > MAX_BUFFER_SIZE:
+            self.__bytes_to_read = MAX_BUFFER_SIZE - (
+                MAX_BUFFER_SIZE % self.__packet_size
+            )
+
+        if self.__bytes_to_read % self.__packet_size:
+            self.__num_chs = 0
+            sys.stderr.write(
+                "Error, bytes_to_read needs to be devisible by packet_size\n"
+            )
+            raise InvalidParameterError()
+        else:
+            self.__num_frames = self.__bytes_to_read // self.__packet_size
+
+    def read(self, convert=True):
         """
         Reads acquisition frames from the device.
 
@@ -233,30 +254,28 @@ class ScientISST:
             UnknownError: If the device stopped sending frames for some unknown reason.
         """
 
-        frames = [None] * num_frames
+        frames = [None] * self.__num_frames
 
         if self.__num_chs == 0:
             raise DeviceNotInAcquisitionError()
 
-        for it in range(num_frames):
+        result = list(self.__recv(self.__bytes_to_read))
+        start = 0
+        for it in range(self.__num_frames):
+            bf = result[start : start + self.__packet_size]
             mid_frame_flag = 0
-            bf = list(self.__recv(self.__packet_size))
-            if not bf:
-                raise UnknownError(
-                    "Esp stopped sending frames -> It stopped live mode on its own \n(probably because it can't handle this number of channels + sample rate)"
-                )
 
             #  if CRC check failed, try to resynchronize with the next valid frame
             while not self.__checkCRC4(bf, self.__packet_size):
-                bf = bf[1:] + [None]
+                sys.stderr.write("Error checking CRC4")
                 #  checking with one new byte at a time
-                result = self.__recv(1)
-                bf[-1] = int.from_bytes(result, "big")
+                result_tmp = list(self.__recv(1))
+                if len(result_tmp) != 1:
+                    raise ContactingDeviceError()
 
-                if not bf[-1]:
-                    return list(
-                        filter(lambda frame: frame, frames)
-                    )  #  a timeout has occurred
+                result += result_tmp
+                start += 1
+                bf = result[start : start + self.__packet_size]
 
             f = Frame(self.__num_chs)
             frames[it] = f
@@ -311,24 +330,12 @@ class ScientISST:
                             )
             elif self.__api_mode == API_MODE_JSON:
                 print(bf)
-            # d.Parse((const char*)buffer);
-
-            # f.seq = 1;
-
-            # for(int i = 0; i < num_chs; i++){
-            # sprintf(memb_name, "AI%d", chs[i]);
-            # f.a[i] = strtol(d[memb_name].GetString(), &junk, 10);
-            # }
-
-            # f.digital[0] = strtol(d["I1"].GetString(), &junk, 10);
-            # f.digital[1] = strtol(d["I2"].GetString(), &junk, 10);
-            # f.digital[2] = strtol(d["O1"].GetString(), &junk, 10);
-            # f.digital[3] = strtol(d["O2"].GetString(), &junk, 10);
-            # }
             else:
                 raise NotSupportedError()
 
-        if len(frames) == num_frames:
+            start += self.__packet_size
+
+        if len(frames) == self.__num_frames:
             return frames
         else:
             raise ContactingDeviceError()
@@ -593,7 +600,7 @@ class ScientISST:
         """
         result = None
         if self.__socket:
-            result = self.__socket.recv(nrOfBytes)
+            result = self.__socket.recv(nrOfBytes, socket.MSG_WAITALL)
         else:
             result = self.__serial.read(nrOfBytes)
         if self.__log:
