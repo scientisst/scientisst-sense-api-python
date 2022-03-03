@@ -15,7 +15,7 @@ from scientisst.state import *
 from scientisst.exceptions import *
 from scientisst.esp_adc.esp_adc import *
 
-TIMEOUT_IN_SECONDS = 10
+TIMEOUT_IN_SECONDS = 5
 
 # API_MODE
 API_MODE_BITALINO = 1
@@ -96,10 +96,7 @@ class ScientISST:
         self.__changeAPI(api)
 
         # get device version string and adc characteristics
-        version = self.version_and_adc_chars()
-
-        if not version:
-            raise ContactingDeviceError()
+        self.version_and_adc_chars()
 
         sys.stdout.write("Connected!\n")
 
@@ -120,6 +117,10 @@ class ScientISST:
         self.__send(cmd)
 
         result = self.__recv(1024)
+
+        if result == b"":
+            raise ContactingDeviceError()
+
         index = result.index(b"\x00")
         version = result[header_len : index - 1].decode("utf-8")
 
