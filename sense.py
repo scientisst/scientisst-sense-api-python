@@ -4,7 +4,7 @@
 sense.py
 """
 
-VERSION = "0.0.3"
+VERSION = "0.1.0"
 
 import sys
 from scientisst import *
@@ -35,11 +35,6 @@ def main():
 
     scientisst = ScientISST(address, log=args.log)
 
-    if args.fs > 5:
-        num_frames = args.fs // 5
-    else:
-        num_frames = args.fs
-
     if args.stream:
         from sense.stream_lsl import StreamLSL
 
@@ -47,7 +42,6 @@ def main():
             args.channels,
             args.fs,
             address,
-            num_frames,
         )
 
     if args.output:
@@ -72,7 +66,7 @@ def main():
             header = "\t".join(get_header(args.channels, args.convert)) + "\n"
             sys.stdout.write(header)
         while not stop_event.is_set():
-            frames = scientisst.read(num_frames, convert=args.convert)
+            frames = scientisst.read(convert=args.convert)
             if args.stream:
                 lsl.put(frames)
             if args.output:
@@ -93,11 +87,11 @@ def main():
     sys.exit(0)
 
 
-def run_scheduled_task(DURATION, stop_event):
+def run_scheduled_task(duration, stop_event):
     def stop(stop_event):
         stop_event.set()
 
-    timer = Timer(DURATION, stop, [stop_event])
+    timer = Timer(duration, stop, [stop_event])
     timer.start()
 
 

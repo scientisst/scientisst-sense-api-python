@@ -20,7 +20,7 @@ scientisst.version()
 
 The following snippet starts streaming data from channels `A1`, `A2`, and `A3` at 100 Hz.
 
-Then, it reads the streaming data in chunks of 20 frames and prints the first [`Frame`][scientisst.frame.Frame].
+Then, it reads the streaming data (by default, for frequencies not too high, 5 times per second) and prints the first [`Frame`][scientisst.frame.Frame].
 
 After reading 1000 frames, it stops the acquisition.
 
@@ -28,7 +28,7 @@ After reading 1000 frames, it stops the acquisition.
 scientisst.start(100, [1, 2, 3])
 
 for i in range(50):
-    frames = scientisst.read(20)
+    frames = scientisst.read()
     print(frames[0])
 
 scientisst.stop()
