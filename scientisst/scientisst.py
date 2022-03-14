@@ -1,5 +1,6 @@
 import sys
 
+
 if sys.platform == "linux":
     import socket
 else:
@@ -12,8 +13,9 @@ from math import log2
 from scientisst.frame import *
 from scientisst.state import *
 from scientisst.exceptions import *
+from scientisst.esp_adc.esp_adc import *
 
-TIMEOUT_IN_SECONDS = 10
+TIMEOUT_IN_SECONDS = 5
 
 # API_MODE
 API_MODE_BITALINO = 1
@@ -29,6 +31,8 @@ AI5 = 5
 AI6 = 6
 AX1 = 7
 AX2 = 8
+
+MAX_BUFFER_SIZE = 4096
 
 
 class ScientISST:
@@ -54,8 +58,9 @@ class ScientISST:
         """
         Args:
             address (str): The device serial port address ("/dev/example")
-            serial_speed (int, optional): The serial port bitrate in bit/s.
-            log (bool, optional): If the bytes sent and received should be showed.
+            serial_speed (int, optional): The serial port bitrate in bit/s
+            log (bool, optional): If the bytes sent and received should be showed
+            api (int): The desired API mode for the device
         """
 
         if sys.platform == "linux":
@@ -88,55 +93,73 @@ class ScientISST:
                 address, serial_speed, timeout=TIMEOUT_IN_SECONDS
             )
 
-        sys.stdout.write("Connected!\n")
-
         # Set API mode
         self.__changeAPI(api)
 
-    def version(self):
+        # get device version string and adc characteristics
+        self.version_and_adc_chars()
+
+        sys.stdout.write("Connected!\n")
+
+    def version_and_adc_chars(self):
         """
-        Gets the device firmware version string
+        Gets the device firmware version string and esp_adc_characteristics
 
         Returns:
             version (str): Firmware version
+
+        Raises:
+            ContactingDeviceError: If there is an error contacting the device.
         """
         if self.__api_mode == API_MODE_BITALINO:
             header = "BITalino"
         else:
             header = "ScientISST"
-        headerLen = len(header)
+        header_len = len(header)
 
         cmd = b"\x07"
         self.__send(cmd)
-        version = ""
-        while True:
-            result = self.__recv(1)
-            if result:
-                if len(version) >= headerLen:
-                    if (
-                        self.__api_mode == API_MODE_BITALINO and result == b"\n"
-                    ) or result == b"\x00":
-                        break
-                    elif result != b"\n":
-                        version += result.decode("utf-8")
-                else:
-                    result = result.decode("utf-8")
-                    if result is header[len(version)]:
-                        version += result
-                    else:
-                        version = ""
-                        if result == header[0]:
-                            version += result
+
+        result = self.__recv(1024)
+
+        if result == b"":
+            raise ContactingDeviceError()
+
+        index = result.index(b"\x00")
+        version = result[header_len : index - 1].decode("utf-8")
+
+        adc1_chars = EspAdcCalChars(result[index + 1 :])
+
+        # Initialize fields for lookup table if necessary
+        if adc1_chars.atten == ADC_ATTEN_DB_11:
+            if adc1_chars.adc_num == ADC_UNIT_1:
+                adc1_chars.low_curve = LUT_ADC1_LOW
             else:
-                return
+                adc1_chars.low_curve = LUT_ADC2_LOW
+
+            if adc1_chars.adc_num == ADC_UNIT_1:
+                adc1_chars.high_curve = LUT_ADC1_HIGH
+            else:
+                adc1_chars.high_curve = LUT_ADC2_HIGH
+        else:
+            adc1_chars.low_curve = 0
+            adc1_chars.high_curve = 0
+
+        self.__adc1_chars = adc1_chars
 
         sys.stdout.write("ScientISST version: {}\n".format(version))
+        sys.stdout.write("ScientISST Board Vref: {}\n".format(adc1_chars.vref))
+        sys.stdout.write(
+            "ScientISST Board ADC Attenuation Mode: {}\n".format(adc1_chars.atten)
+        )
+
         return version
 
     def start(
         self,
         sample_rate,
         channels,
+        reads_per_second=5,
         simulated=False,
     ):
         """
@@ -151,6 +174,11 @@ class ScientISST:
 
                 Accepted channels are 1...6 for inputs A1...A6.
 
+            reads_per_second (int): Number of times to read the data streaming from the device.
+
+                Accepted values are integers greater than 0.
+
+
             simulated (bool): If true, start in simulated mode.
 
                 Otherwise start in live mode. Default is to start in live mode.
@@ -159,19 +187,10 @@ class ScientISST:
             DeviceNotIdleError: If the device is already in acquisition mode.
             InvalidParameterError: If no valid API value is chosen or an incorrect array of channels is provided.
         """
+        assert int(reads_per_second) > 0
+
         if self.__num_chs != 0:
             raise DeviceNotIdleError()
-
-        # Set API mode
-        self.__changeAPI(self.__api_mode)
-
-        self.__sample_rate = sample_rate
-        self.__num_chs = 0
-
-        # Sample rate
-        sr = 0b01000011
-        sr |= self.__sample_rate << 8
-        self.__send(sr, 4)
 
         if not channels:  # channels is empty
             chMask = 0xFF  #  all 8 analog channels
@@ -185,10 +204,18 @@ class ScientISST:
 
                 mask = 1 << (ch - 1)
                 if chMask & mask:
+                    self.__num_chs = 0
                     raise InvalidParameterError()
 
                 chMask |= mask
                 self.__num_chs += 1
+
+        self.__sample_rate = sample_rate
+
+        # Sample rate
+        sr = 0b01000011
+        sr |= self.__sample_rate << 8
+        self.__send(sr, 4)
 
         # Cleanup existing data in bluetooth socket
         self.__clear()
@@ -203,48 +230,64 @@ class ScientISST:
 
         self.__packet_size = self.__getPacketSize()
 
-    def read(self, num_frames):
+        self.__bytes_to_read = self.__packet_size * max(
+            sample_rate // reads_per_second, 1
+        )
+        if self.__bytes_to_read > MAX_BUFFER_SIZE:
+            self.__bytes_to_read = MAX_BUFFER_SIZE - (
+                MAX_BUFFER_SIZE % self.__packet_size
+            )
+
+        if self.__bytes_to_read % self.__packet_size:
+            self.__num_chs = 0
+            sys.stderr.write(
+                "Error, bytes_to_read needs to be devisible by packet_size\n"
+            )
+            raise InvalidParameterError()
+        else:
+            self.__num_frames = self.__bytes_to_read // self.__packet_size
+
+    def read(self, convert=True):
         """
         Reads acquisition frames from the device.
 
         This method returns when all requested frames are received from the device, or when a timeout occurs.
 
         Args:
-            num_frames (int): Number of frames to retrieve from the device
+            convert (bool): Convert from raw to mV
 
         Returns:
             frames (list): List of [`Frame`][scientisst.frame.Frame] objects retrieved from the device
 
         Raises:
+            ContactingDeviceError: If there is an error contacting the device.
             DeviceNotInAcquisitionError: If the device is not in acquisition mode.
             NotSupportedError: If the device API is in BITALINO mode
             UnknownError: If the device stopped sending frames for some unknown reason.
         """
 
-        frames = [None] * num_frames
+        frames = [None] * self.__num_frames
 
         if self.__num_chs == 0:
             raise DeviceNotInAcquisitionError()
 
-        for it in range(num_frames):
+        result = list(self.__recv(self.__bytes_to_read))
+        start = 0
+        for it in range(self.__num_frames):
+            bf = result[start : start + self.__packet_size]
             mid_frame_flag = 0
-            bf = list(self.__recv(self.__packet_size))
-            if not bf:
-                raise UnknownError(
-                    "Esp stopped sending frames -> It stopped live mode on its own \n(probably because it can't handle this number of channels + sample rate)"
-                )
 
             #  if CRC check failed, try to resynchronize with the next valid frame
             while not self.__checkCRC4(bf, self.__packet_size):
-                bf = bf[1:] + [None]
+                sys.stderr.write("Error checking CRC4")
                 #  checking with one new byte at a time
-                result = self.__recv(1)
-                bf[-1] = int.from_bytes(result, "big")
+                result_tmp = list(self.__recv(1))
+                if len(result_tmp) != 1:
+                    raise ContactingDeviceError()
 
-                if not bf[-1]:
-                    return list(
-                        filter(lambda frame: frame, frames)
-                    )  #  a timeout has occurred
+                result += result_tmp
+                start += 1
+                bf = result[start : start + self.__packet_size]
 
             f = Frame(self.__num_chs)
             frames[it] = f
@@ -290,26 +333,24 @@ class ScientISST:
                             )
                             byte_it += 2
                             mid_frame_flag = 0
+                        if convert:
+                            f.mv[index] = int(
+                                esp_adc_cal_raw_to_voltage(
+                                    f.a[index], self.__adc1_chars
+                                )
+                                * VOLT_DIVIDER_FACTOR
+                            )
             elif self.__api_mode == API_MODE_JSON:
                 print(bf)
-            # d.Parse((const char*)buffer);
-
-            # f.seq = 1;
-
-            # for(int i = 0; i < num_chs; i++){
-            # sprintf(memb_name, "AI%d", chs[i]);
-            # f.a[i] = strtol(d[memb_name].GetString(), &junk, 10);
-            # }
-
-            # f.digital[0] = strtol(d["I1"].GetString(), &junk, 10);
-            # f.digital[1] = strtol(d["I2"].GetString(), &junk, 10);
-            # f.digital[2] = strtol(d["O1"].GetString(), &junk, 10);
-            # f.digital[3] = strtol(d["O2"].GetString(), &junk, 10);
-            # }
             else:
                 raise NotSupportedError()
 
-        return frames
+            start += self.__packet_size
+
+        if len(frames) == self.__num_frames:
+            return frames
+        else:
+            raise ContactingDeviceError()
 
     def stop(self):
         """
@@ -551,7 +592,7 @@ class ScientISST:
             for _ in range(nrOfBytes - len(command)):
                 command += b"\x00"
         # if self.__serial:
-        time.sleep(0.150)
+        time.sleep(0.250)
         if self.__log:
             sys.stdout.write(
                 "{} bytes sent: {}\n".format(
@@ -571,7 +612,7 @@ class ScientISST:
         """
         result = None
         if self.__socket:
-            result = self.__socket.recv(nrOfBytes)
+            result = self.__socket.recv(nrOfBytes, socket.MSG_WAITALL)
         else:
             result = self.__serial.read(nrOfBytes)
         if self.__log:
@@ -604,3 +645,16 @@ class ScientISST:
             self.__socket.setblocking(True)
         else:
             self.__serial.timeout = TIMEOUT_IN_SECONDS
+
+    def number_of_frames(self):
+        """Gets the number of frames of an instantiated ScientISST device.
+
+            Returns:
+                self.__num_frames (int): Number of frames
+
+        Raises:
+            ContactingDeviceError: If there is an error contacting the device."""
+        try:
+            return self.__num_frames
+        except:
+            raise ContactingDeviceError()

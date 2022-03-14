@@ -4,7 +4,7 @@
 sense.py
 """
 
-VERSION = "0.0.3"
+VERSION = "0.1.0"
 
 import sys
 from scientisst import *
@@ -13,6 +13,8 @@ from threading import Event
 from sense.arg_parser import ArgParser
 from sense.device_picker import DevicePicker
 from sense.file_writer import *
+from PyQt5.QtWidgets import QApplication
+from scientisst.rt_plotter import MainWindow
 
 
 def main():
@@ -34,12 +36,6 @@ def main():
     args.channels = sorted(map(int, args.channels.split(",")))
 
     scientisst = ScientISST(address, log=args.log)
-    scientisst.version()
-
-    if args.fs == 1:
-        num_frames = 1
-    else:
-        num_frames = args.fs // 5
 
     if args.stream:
         from sense.stream_lsl import StreamLSL
@@ -48,17 +44,23 @@ def main():
             args.channels,
             args.fs,
             address,
-            num_frames,
         )
+    else:
+        lsl = None
 
     if args.output:
-        file_writer = FileWriter(args.output, address, args.fs, args.channels)
+        file_writer = FileWriter(
+            args.output, address, args.fs, args.channels, args.convert
+        )
+    else:
+        file_writer = None
 
     stop_event = Event()
 
     scientisst.start(args.fs, args.channels)
     if args.stream:
         lsl.start()
+
     if args.output:
         file_writer.start()
 
@@ -68,10 +70,17 @@ def main():
         run_scheduled_task(args.duration, stop_event)
     try:
         if args.verbose:
-            header = "\t".join(get_header(args.channels)) + "\n"
+            header = "\t".join(get_header(args.channels, args.convert)) + "\n"
             sys.stdout.write(header)
+
+            if args.rt_signals:
+                app = QApplication(sys.argv)
+                form = MainWindow(stop_event, scientisst, args, file_buffer=file_writer, lsl_buffer=lsl)
+                form.show()
+                app.exec_()
+
         while not stop_event.is_set():
-            frames = scientisst.read(num_frames)
+            frames = scientisst.read(convert=args.convert)
             if args.stream:
                 lsl.put(frames)
             if args.output:
@@ -92,11 +101,11 @@ def main():
     sys.exit(0)
 
 
-def run_scheduled_task(DURATION, stop_event):
+def run_scheduled_task(duration, stop_event):
     def stop(stop_event):
         stop_event.set()
 
-    timer = Timer(DURATION, stop, [stop_event])
+    timer = Timer(duration, stop, [stop_event])
     timer.start()
 
 

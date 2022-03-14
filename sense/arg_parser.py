@@ -53,6 +53,14 @@ class ArgParser:
             default=None,
         )
         self.parser.add_argument(
+            "-r",
+            "--raw",
+            action="store_false",
+            dest="convert",
+            default=True,
+            help="do not convert from raw to mV",
+        )
+        self.parser.add_argument(
             "-s",
             "--lsl",
             dest="stream",
@@ -82,6 +90,12 @@ class ArgParser:
             action="store_true",
             default=False,
             help="log sent/received bytes",
+        )
+        self.parser.add_argument(
+            "--rt_signals",
+            dest="rt_signals",
+            default=True,
+            help="If true, real-time plotting of raw voltage is enabled for the selected analog channels.",
         )
         self.args = self.parser.parse_args()
 

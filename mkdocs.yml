@@ -7,19 +7,19 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - Getting started:
-    - sense.py: getting-started/sense.md
-    - API: getting-started/api.md
+      - sense.py: getting-started/sense.md
+      - API: getting-started/api.md
   - API Reference:
-    - ScientISST: reference/scientisst-reference.md
-    - Exceptions: reference/exceptions-reference.md
-    - Frame: reference/frame-reference.md
-    - State: reference/state-reference.md
+      - ScientISST: reference/scientisst-reference.md
+      - Exceptions: reference/exceptions-reference.md
+      - Frame: reference/frame-reference.md
+      - State: reference/state-reference.md
 
 theme:
   name: material
   highlightjs: true
   hljs_languages:
-      - python
+    - python
   logo: img/logo.png
   favicon: img/favicon.ico
   icon:
@@ -45,7 +45,7 @@ theme:
 
 extra:
   social:
-    - icon: fontawesome/solid/globe-europe
+    - icon: fontawesome/solid/globe
       link: https://scientisst.com
     - icon: fontawesome/brands/facebook
       link: https://www.facebook.com/ScientISSThub
@@ -60,7 +60,6 @@ extra:
 
 extra_css:
   - css/extra.css
-
 
 copyright: Copyright &copy; 2020 - 2021 ScientISST
 

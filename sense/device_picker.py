@@ -24,7 +24,7 @@ class DevicePicker:
 
     def __get_device_options(self):
         if sys.platform == "linux":
-            options = self.get_linux_bth_devices()
+            options = self.__get_linux_bth_devices()
             return list(map(lambda option: option["addr"], options)), list(
                 map(
                     lambda option: "{} - {}".format(option["name"], option["addr"]),
@@ -40,7 +40,10 @@ class DevicePicker:
             for port, desc, hwid in sorted(ports):
                 if "scientisst" in port.lower():
                     options += [port]
-                    labels += ["{} - {}".format(desc, port)]
+                    label = ""
+                    if desc != "n/a":
+                        label += "{} - ".format(desc)
+                    labels += [label + port]
             return options, labels
 
     def __get_linux_bth_devices(self):
