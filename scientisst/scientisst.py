@@ -648,3 +648,16 @@ class ScientISST:
             self.__socket.setblocking(True)
         else:
             self.__serial.timeout = TIMEOUT_IN_SECONDS
+
+    def number_of_frames(self):
+        """Gets the number of frames of an instantiated ScientISST device.
+
+            Returns:
+                self.__num_frames (int): Number of frames
+
+        Raises:
+            ContactingDeviceError: If there is an error contacting the device."""
+        try:
+            return self.__num_frames
+        except:
+            raise ContactingDeviceError()
