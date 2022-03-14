@@ -91,6 +91,12 @@ class ArgParser:
             default=False,
             help="log sent/received bytes",
         )
+        self.parser.add_argument(
+            "--rt_signals",
+            dest="rt_signals",
+            default=True,
+            help="If true, real-time plotting of raw voltage is enabled for the selected analog channels.",
+        )
         self.args = self.parser.parse_args()
 
     def error(self, value):

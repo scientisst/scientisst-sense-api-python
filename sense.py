@@ -13,6 +13,8 @@ from threading import Event
 from sense.arg_parser import ArgParser
 from sense.device_picker import DevicePicker
 from sense.file_writer import *
+from PyQt5.QtWidgets import QApplication
+from scientisst.rt_plotter import MainWindow
 
 
 def main():
@@ -43,17 +45,22 @@ def main():
             args.fs,
             address,
         )
+    else:
+        lsl = None
 
     if args.output:
         file_writer = FileWriter(
             args.output, address, args.fs, args.channels, args.convert
         )
+    else:
+        file_writer = None
 
     stop_event = Event()
 
     scientisst.start(args.fs, args.channels)
     if args.stream:
         lsl.start()
+
     if args.output:
         file_writer.start()
 
@@ -65,6 +72,13 @@ def main():
         if args.verbose:
             header = "\t".join(get_header(args.channels, args.convert)) + "\n"
             sys.stdout.write(header)
+
+            if args.rt_signals:
+                app = QApplication(sys.argv)
+                form = MainWindow(stop_event, scientisst, args, file_buffer=file_writer, lsl_buffer=lsl)
+                form.show()
+                app.exec_()
+
         while not stop_event.is_set():
             frames = scientisst.read(convert=args.convert)
             if args.stream:
