@@ -27,7 +27,10 @@ class DevicePicker:
             options = self.__get_linux_bth_devices()
             return list(map(lambda option: option["addr"], options)), list(
                 map(
-                    lambda option: "{} - {}".format(option["name"], option["addr"]),
+                    lambda option: "{} - {}".format(
+                        option["name"] if "name" in option else "unnamed",
+                        option["addr"],
+                    ),
                     options,
                 )
             )

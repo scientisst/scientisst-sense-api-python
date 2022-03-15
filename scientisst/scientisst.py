@@ -101,7 +101,7 @@ class ScientISST:
 
         sys.stdout.write("Connected!\n")
 
-    def version_and_adc_chars(self):
+    def version_and_adc_chars(self, print=True):
         """
         Gets the device firmware version string and esp_adc_characteristics
 
@@ -147,11 +147,12 @@ class ScientISST:
 
         self.__adc1_chars = adc1_chars
 
-        sys.stdout.write("ScientISST version: {}\n".format(version))
-        sys.stdout.write("ScientISST Board Vref: {}\n".format(adc1_chars.vref))
-        sys.stdout.write(
-            "ScientISST Board ADC Attenuation Mode: {}\n".format(adc1_chars.atten)
-        )
+        if print:
+            sys.stdout.write("ScientISST version: {}\n".format(version))
+            sys.stdout.write("ScientISST Board Vref: {}\n".format(adc1_chars.vref))
+            sys.stdout.write(
+                "ScientISST Board ADC Attenuation Mode: {}\n".format(adc1_chars.atten)
+            )
 
         return version
 

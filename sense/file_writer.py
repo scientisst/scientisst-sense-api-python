@@ -5,13 +5,16 @@ from datetime import datetime
 
 
 class FileWriter(ThreadBuilder):
-    def __init__(self, filename, address, fs, channels, mv):
+    def __init__(
+        self, filename, address, fs, channels, mv, api_version, firmware_version
+    ):
         super().__init__()
         self.filename = filename
-        self.address = address
-        self.fs = fs
-        self.channels = channels
         self.mv = mv
+        self.channels = channels
+        self.metadata = self.__get_metadata(
+            address, fs, channels, api_version, firmware_version
+        )
 
     def start(self):
         self.__init_file()
@@ -19,7 +22,8 @@ class FileWriter(ThreadBuilder):
 
     def stop(self):
         super().stop()
-        self.f.close()
+        if self.f:
+            self.f.close()
 
     def thread_method(self, frames):
         self.f.write("\n".join(map(str, frames)) + "\n")
@@ -30,21 +34,22 @@ class FileWriter(ThreadBuilder):
         self.f = open(self.filename, "w")
         sys.stdout.write("Saving data to {}\n".format(self.filename))
 
-        metadata = self.__get_metadata(self.address, self.fs, self.channels)
-        header = "\t".join(metadata["Header"])
+        header = "\t".join(self.metadata["Header"])
 
-        self.f.write("#{}\n".format(metadata))
+        self.f.write("#{}\n".format(self.metadata))
         self.f.write("#{}\n".format(header))
 
-    def __get_metadata(self, address, fs, channels):
+    def __get_metadata(self, address, fs, channels, api_version, firmware_version):
         timestamp = datetime.now()
         metadata = {
+            "API version": api_version,
             "Channels": channels,
             "Channels labels": get_channel_labels(channels, self.mv),
             "Device": address,
+            "Firmware version": firmware_version,
             "Header": get_header(channels, self.mv),
             "Resolution (bits)": [4, 1, 1, 1, 1] + self.__get_channel_resolutions(),
-            "Sampling Rate (Hz)": fs,
+            "Sampling rate (Hz)": fs,
             "Timestamp": timestamp.timestamp(),
             "ISO 8601": timestamp.isoformat(),
         }

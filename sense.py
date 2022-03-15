@@ -4,7 +4,7 @@
 sense.py
 """
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 import sys
 from scientisst import *
@@ -35,6 +35,18 @@ def main():
 
     scientisst = ScientISST(address, log=args.log)
 
+    # try to connect to board
+    n = 5
+    firmware_version = None
+    while not firmware_version:
+        try:
+            firmware_version = scientisst.version_and_adc_chars(print=False)
+        except ContactingDeviceError:
+            if n > 0:
+                n -= 1
+            else:
+                raise ContactingDeviceError()
+
     if args.stream:
         from sense.stream_lsl import StreamLSL
 
@@ -46,7 +58,13 @@ def main():
 
     if args.output:
         file_writer = FileWriter(
-            args.output, address, args.fs, args.channels, args.convert
+            args.output,
+            address,
+            args.fs,
+            args.channels,
+            args.convert,
+            VERSION,
+            firmware_version,
         )
 
     stop_event = Event()
