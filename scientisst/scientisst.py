@@ -53,7 +53,12 @@ class ScientISST:
     __log = False
 
     def __init__(
-        self, address, serial_speed=115200, log=False, api=API_MODE_SCIENTISST
+        self,
+        address,
+        serial_speed=115200,
+        log=False,
+        api=API_MODE_SCIENTISST,
+        connection_tries=5,
     ):
         """
         Args:
@@ -93,11 +98,19 @@ class ScientISST:
                 address, serial_speed, timeout=TIMEOUT_IN_SECONDS
             )
 
-        # Set API mode
-        self.__changeAPI(api)
-
-        # get device version string and adc characteristics
-        self.version_and_adc_chars()
+        # try to connect to board
+        while True:
+            try:
+                # Set API mode
+                self.__changeAPI(api)
+                # get device version string and adc characteristics
+                self.version_and_adc_chars()
+                break
+            except ContactingDeviceError:
+                if connection_tries > 0:
+                    connection_tries -= 1
+                else:
+                    raise ContactingDeviceError()
 
         sys.stdout.write("Connected!\n")
 
