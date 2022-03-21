@@ -804,7 +804,12 @@ ScientISST        </code>
     <span class="n">__log</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">serial_speed</span><span class="o">=</span><span class="mi">115200</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">api</span><span class="o">=</span><span class="n">API_MODE_SCIENTISST</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">address</span><span class="p">,</span>
+        <span class="n">serial_speed</span><span class="o">=</span><span class="mi">115200</span><span class="p">,</span>
+        <span class="n">log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">api</span><span class="o">=</span><span class="n">API_MODE_SCIENTISST</span><span class="p">,</span>
+        <span class="n">connection_tries</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -844,11 +849,19 @@ ScientISST        </code>
                 <span class="n">address</span><span class="p">,</span> <span class="n">serial_speed</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">TIMEOUT_IN_SECONDS</span>
             <span class="p">)</span>
 
-        <span class="c1"># Set API mode</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__changeAPI</span><span class="p">(</span><span class="n">api</span><span class="p">)</span>
-
-        <span class="c1"># get device version string and adc characteristics</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">version_and_adc_chars</span><span class="p">()</span>
+        <span class="c1"># try to connect to board</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Set API mode</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__changeAPI</span><span class="p">(</span><span class="n">api</span><span class="p">)</span>
+                <span class="c1"># get device version string and adc characteristics</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">version_and_adc_chars</span><span class="p">()</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="n">ContactingDeviceError</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">connection_tries</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">connection_tries</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">ContactingDeviceError</span><span class="p">()</span>
 
         <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Connected!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -1417,7 +1430,7 @@ ScientISST        </code>
 
 
 <h3 class="doc doc-heading" id="scientisst.scientisst.ScientISST.__init__">
-<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">serial_speed</span><span class="o">=</span><span class="mi">115200</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">api</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">serial_speed</span><span class="o">=</span><span class="mi">115200</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">api</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">connection_tries</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -1468,7 +1481,12 @@ ScientISST        </code>
         <details class="quote">
           <summary>Source code in <code>scientisst/scientisst.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">serial_speed</span><span class="o">=</span><span class="mi">115200</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">api</span><span class="o">=</span><span class="n">API_MODE_SCIENTISST</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">address</span><span class="p">,</span>
+    <span class="n">serial_speed</span><span class="o">=</span><span class="mi">115200</span><span class="p">,</span>
+    <span class="n">log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">api</span><span class="o">=</span><span class="n">API_MODE_SCIENTISST</span><span class="p">,</span>
+    <span class="n">connection_tries</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Args:</span>
@@ -1508,11 +1526,19 @@ ScientISST        </code>
             <span class="n">address</span><span class="p">,</span> <span class="n">serial_speed</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">TIMEOUT_IN_SECONDS</span>
         <span class="p">)</span>
 
-    <span class="c1"># Set API mode</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">__changeAPI</span><span class="p">(</span><span class="n">api</span><span class="p">)</span>
-
-    <span class="c1"># get device version string and adc characteristics</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">version_and_adc_chars</span><span class="p">()</span>
+    <span class="c1"># try to connect to board</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Set API mode</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__changeAPI</span><span class="p">(</span><span class="n">api</span><span class="p">)</span>
+            <span class="c1"># get device version string and adc characteristics</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">version_and_adc_chars</span><span class="p">()</span>
+            <span class="k">break</span>
+        <span class="k">except</span> <span class="n">ContactingDeviceError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">connection_tries</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">connection_tries</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ContactingDeviceError</span><span class="p">()</span>
 
     <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Connected!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
