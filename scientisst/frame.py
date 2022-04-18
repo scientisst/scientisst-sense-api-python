@@ -31,9 +31,9 @@ class Frame:
     a = None
     mv = None
 
-    def __init__(self, num_frames):
-        self.a = [None] * num_frames
-        self.mv = [None] * num_frames
+    def __init__(self, num_channels):
+        self.a = [None] * num_channels
+        self.mv = [None] * num_channels
 
     def toMap(self):
         return {

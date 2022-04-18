@@ -128,30 +128,17 @@ class ScientISST:
         index = result.index(b"\x00")
         version = result[header_len : index - 1].decode("utf-8")
 
-        adc1_chars = EspAdcCalChars(result[index + 1 :])
-
-        # Initialize fields for lookup table if necessary
-        if adc1_chars.atten == ADC_ATTEN_DB_11:
-            if adc1_chars.adc_num == ADC_UNIT_1:
-                adc1_chars.low_curve = LUT_ADC1_LOW
-            else:
-                adc1_chars.low_curve = LUT_ADC2_LOW
-
-            if adc1_chars.adc_num == ADC_UNIT_1:
-                adc1_chars.high_curve = LUT_ADC1_HIGH
-            else:
-                adc1_chars.high_curve = LUT_ADC2_HIGH
-        else:
-            adc1_chars.low_curve = 0
-            adc1_chars.high_curve = 0
-
-        self.__adc1_chars = adc1_chars
+        self.__adc1_chars = EspAdcCalChars(result[index + 1 :])
 
         if print:
             sys.stdout.write("ScientISST version: {}\n".format(version))
-            sys.stdout.write("ScientISST Board Vref: {}\n".format(adc1_chars.vref))
             sys.stdout.write(
-                "ScientISST Board ADC Attenuation Mode: {}\n".format(adc1_chars.atten)
+                "ScientISST Board Vref: {}\n".format(self.__adc1_chars.vref)
+            )
+            sys.stdout.write(
+                "ScientISST Board ADC Attenuation Mode: {}\n".format(
+                    self.__adc1_chars.atten
+                )
             )
 
         return version
@@ -335,12 +322,7 @@ class ScientISST:
                             byte_it += 2
                             mid_frame_flag = 0
                         if convert:
-                            f.mv[index] = int(
-                                esp_adc_cal_raw_to_voltage(
-                                    f.a[index], self.__adc1_chars
-                                )
-                                * VOLT_DIVIDER_FACTOR
-                            )
+                            f.mv[index] = self.__adc1_chars.esp_adc_cal_raw_to_voltage(f.a[index])
             elif self.__api_mode == API_MODE_JSON:
                 print(bf)
             else:
