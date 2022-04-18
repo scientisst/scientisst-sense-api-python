@@ -892,30 +892,17 @@ ScientISST        </code>
         <span class="n">index</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">version</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">header_len</span> <span class="p">:</span> <span class="n">index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
 
-        <span class="n">adc1_chars</span> <span class="o">=</span> <span class="n">EspAdcCalChars</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:])</span>
-
-        <span class="c1"># Initialize fields for lookup table if necessary</span>
-        <span class="k">if</span> <span class="n">adc1_chars</span><span class="o">.</span><span class="n">atten</span> <span class="o">==</span> <span class="n">ADC_ATTEN_DB_11</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">adc1_chars</span><span class="o">.</span><span class="n">adc_num</span> <span class="o">==</span> <span class="n">ADC_UNIT_1</span><span class="p">:</span>
-                <span class="n">adc1_chars</span><span class="o">.</span><span class="n">low_curve</span> <span class="o">=</span> <span class="n">LUT_ADC1_LOW</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">adc1_chars</span><span class="o">.</span><span class="n">low_curve</span> <span class="o">=</span> <span class="n">LUT_ADC2_LOW</span>
-
-            <span class="k">if</span> <span class="n">adc1_chars</span><span class="o">.</span><span class="n">adc_num</span> <span class="o">==</span> <span class="n">ADC_UNIT_1</span><span class="p">:</span>
-                <span class="n">adc1_chars</span><span class="o">.</span><span class="n">high_curve</span> <span class="o">=</span> <span class="n">LUT_ADC1_HIGH</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">adc1_chars</span><span class="o">.</span><span class="n">high_curve</span> <span class="o">=</span> <span class="n">LUT_ADC2_HIGH</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">adc1_chars</span><span class="o">.</span><span class="n">low_curve</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="n">adc1_chars</span><span class="o">.</span><span class="n">high_curve</span> <span class="o">=</span> <span class="mi">0</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">__adc1_chars</span> <span class="o">=</span> <span class="n">adc1_chars</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__adc1_chars</span> <span class="o">=</span> <span class="n">EspAdcCalChars</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:])</span>
 
         <span class="k">if</span> <span class="nb">print</span><span class="p">:</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;ScientISST version: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">version</span><span class="p">))</span>
-            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;ScientISST Board Vref: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">adc1_chars</span><span class="o">.</span><span class="n">vref</span><span class="p">))</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-                <span class="s2">&quot;ScientISST Board ADC Attenuation Mode: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">adc1_chars</span><span class="o">.</span><span class="n">atten</span><span class="p">)</span>
+                <span class="s2">&quot;ScientISST Board Vref: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__adc1_chars</span><span class="o">.</span><span class="n">vref</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                <span class="s2">&quot;ScientISST Board ADC Attenuation Mode: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__adc1_chars</span><span class="o">.</span><span class="n">atten</span>
+                <span class="p">)</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">version</span>
@@ -1099,12 +1086,7 @@ ScientISST        </code>
                             <span class="n">byte_it</span> <span class="o">+=</span> <span class="mi">2</span>
                             <span class="n">mid_frame_flag</span> <span class="o">=</span> <span class="mi">0</span>
                         <span class="k">if</span> <span class="n">convert</span><span class="p">:</span>
-                            <span class="n">f</span><span class="o">.</span><span class="n">mv</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
-                                <span class="n">esp_adc_cal_raw_to_voltage</span><span class="p">(</span>
-                                    <span class="n">f</span><span class="o">.</span><span class="n">a</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">__adc1_chars</span>
-                                <span class="p">)</span>
-                                <span class="o">*</span> <span class="n">VOLT_DIVIDER_FACTOR</span>
-                            <span class="p">)</span>
+                            <span class="n">f</span><span class="o">.</span><span class="n">mv</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__adc1_chars</span><span class="o">.</span><span class="n">esp_adc_cal_raw_to_voltage</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">a</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__api_mode</span> <span class="o">==</span> <span class="n">API_MODE_JSON</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="n">bf</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -1936,12 +1918,7 @@ ScientISST        </code>
                         <span class="n">byte_it</span> <span class="o">+=</span> <span class="mi">2</span>
                         <span class="n">mid_frame_flag</span> <span class="o">=</span> <span class="mi">0</span>
                     <span class="k">if</span> <span class="n">convert</span><span class="p">:</span>
-                        <span class="n">f</span><span class="o">.</span><span class="n">mv</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
-                            <span class="n">esp_adc_cal_raw_to_voltage</span><span class="p">(</span>
-                                <span class="n">f</span><span class="o">.</span><span class="n">a</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">__adc1_chars</span>
-                            <span class="p">)</span>
-                            <span class="o">*</span> <span class="n">VOLT_DIVIDER_FACTOR</span>
-                        <span class="p">)</span>
+                        <span class="n">f</span><span class="o">.</span><span class="n">mv</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__adc1_chars</span><span class="o">.</span><span class="n">esp_adc_cal_raw_to_voltage</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">a</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__api_mode</span> <span class="o">==</span> <span class="n">API_MODE_JSON</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">bf</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2430,30 +2407,17 @@ ScientISST        </code>
     <span class="n">index</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">version</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">header_len</span> <span class="p">:</span> <span class="n">index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
 
-    <span class="n">adc1_chars</span> <span class="o">=</span> <span class="n">EspAdcCalChars</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:])</span>
-
-    <span class="c1"># Initialize fields for lookup table if necessary</span>
-    <span class="k">if</span> <span class="n">adc1_chars</span><span class="o">.</span><span class="n">atten</span> <span class="o">==</span> <span class="n">ADC_ATTEN_DB_11</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">adc1_chars</span><span class="o">.</span><span class="n">adc_num</span> <span class="o">==</span> <span class="n">ADC_UNIT_1</span><span class="p">:</span>
-            <span class="n">adc1_chars</span><span class="o">.</span><span class="n">low_curve</span> <span class="o">=</span> <span class="n">LUT_ADC1_LOW</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">adc1_chars</span><span class="o">.</span><span class="n">low_curve</span> <span class="o">=</span> <span class="n">LUT_ADC2_LOW</span>
-
-        <span class="k">if</span> <span class="n">adc1_chars</span><span class="o">.</span><span class="n">adc_num</span> <span class="o">==</span> <span class="n">ADC_UNIT_1</span><span class="p">:</span>
-            <span class="n">adc1_chars</span><span class="o">.</span><span class="n">high_curve</span> <span class="o">=</span> <span class="n">LUT_ADC1_HIGH</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">adc1_chars</span><span class="o">.</span><span class="n">high_curve</span> <span class="o">=</span> <span class="n">LUT_ADC2_HIGH</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">adc1_chars</span><span class="o">.</span><span class="n">low_curve</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">adc1_chars</span><span class="o">.</span><span class="n">high_curve</span> <span class="o">=</span> <span class="mi">0</span>
-
-    <span class="bp">self</span><span class="o">.</span><span class="n">__adc1_chars</span> <span class="o">=</span> <span class="n">adc1_chars</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">__adc1_chars</span> <span class="o">=</span> <span class="n">EspAdcCalChars</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:])</span>
 
     <span class="k">if</span> <span class="nb">print</span><span class="p">:</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;ScientISST version: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">version</span><span class="p">))</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;ScientISST Board Vref: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">adc1_chars</span><span class="o">.</span><span class="n">vref</span><span class="p">))</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;ScientISST Board ADC Attenuation Mode: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">adc1_chars</span><span class="o">.</span><span class="n">atten</span><span class="p">)</span>
+            <span class="s2">&quot;ScientISST Board Vref: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__adc1_chars</span><span class="o">.</span><span class="n">vref</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="s2">&quot;ScientISST Board ADC Attenuation Mode: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__adc1_chars</span><span class="o">.</span><span class="n">atten</span>
+            <span class="p">)</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">version</span>
