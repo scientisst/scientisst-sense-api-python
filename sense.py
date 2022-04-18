@@ -35,28 +35,8 @@ def main():
 
     scientisst = ScientISST(address, log=args.log)
 
-    # try to connect to board
-    n = 5
-    firmware_version = None
-    while not firmware_version:
-        try:
-            firmware_version = scientisst.version_and_adc_chars(print=False)
-        except ContactingDeviceError:
-            if n > 0:
-                n -= 1
-            else:
-                raise ContactingDeviceError()
-
-    if args.stream:
-        from sense.stream_lsl import StreamLSL
-
-        lsl = StreamLSL(
-            args.channels,
-            args.fs,
-            address,
-        )
-
     if args.output:
+        firmware_version = scientisst.version_and_adc_chars(print=False)
         file_writer = FileWriter(
             args.output,
             address,
@@ -67,13 +47,22 @@ def main():
             firmware_version,
         )
 
+    if args.stream:
+        from sense.stream_lsl import StreamLSL
+
+        lsl = StreamLSL(
+            args.channels,
+            args.fs,
+            address,
+        )
+
     stop_event = Event()
 
     scientisst.start(args.fs, args.channels)
-    if args.stream:
-        lsl.start()
     if args.output:
         file_writer.start()
+    if args.stream:
+        lsl.start()
 
     sys.stdout.write("Start acquisition\n")
 
@@ -85,19 +74,19 @@ def main():
             sys.stdout.write(header)
         while not stop_event.is_set():
             frames = scientisst.read(convert=args.convert)
-            if args.stream:
-                lsl.put(frames)
             if args.output:
                 file_writer.put(frames)
+            if args.stream:
+                lsl.put(frames)
             if args.verbose:
                 sys.stdout.write("{}\n".format(frames[0]))
     except KeyboardInterrupt:
         pass
     sys.stdout.write("Stop acquisition\n")
-    if args.stream:
-        lsl.stop()
     if args.output:
         file_writer.stop()
+    if args.stream:
+        lsl.stop()
 
     scientisst.stop()
     scientisst.disconnect()
