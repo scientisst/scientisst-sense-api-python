@@ -1,5 +1,6 @@
 import sys
 from argparse import ArgumentParser
+from scientisst.constants import *
 
 
 class ArgParser:
@@ -18,7 +19,7 @@ class ArgParser:
             "address",
             nargs="?",
             type=str,
-            help="Linux: bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port",
+            help="(For bluetooth communication) Linux, bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port\n (For TCP/UDP communication)All platforms: Server port.",
         )
         self.parser.add_argument(
             "-f",
@@ -90,6 +91,13 @@ class ArgParser:
             action="store_true",
             default=False,
             help="log sent/received bytes",
+        )
+        self.parser.add_argument(
+            "--com_mode",
+            dest="com_mode",
+            type=str,
+            default=COM_MODE_BT,
+            help="The communication mode. Currently supported modes: " + ", ".join(COM_MODE_LIST) + ". Default: " + COM_MODE_BT
         )
         self.args = self.parser.parse_args()
 
