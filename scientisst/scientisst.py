@@ -1,10 +1,10 @@
 import sys
 
 
-if sys.platform == "linux":
-    import socket
-else:
-    import serial
+#if sys.platform == "linux":
+import socket
+#else:
+import serial
 
 import time
 import re
