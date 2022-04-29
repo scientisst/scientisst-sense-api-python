@@ -9,7 +9,7 @@
       
       
       <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.9">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.11">
     
     
       
@@ -17,7 +17,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.120efc48.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.8c5ef100.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.9647289d.min.css">
@@ -67,7 +67,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#dependencies" class="md-skip">
+        <a href="#usage-options" class="md-skip">
           Skip to content
         </a>
       
@@ -389,13 +389,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#dependencies" class="md-nav__link">
-    Dependencies
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#usage-options" class="md-nav__link">
     Usage Options
   </a>
@@ -489,6 +482,26 @@
           <li class="md-nav__item">
   <a href="#lab-streaming-layer" class="md-nav__link">
     Lab Streaming Layer
+  </a>
+  
+    <nav class="md-nav" aria-label="Lab Streaming Layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#visualize-the-streaming-data-using" class="md-nav__link">
+    Visualize the streaming data using:
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-script" class="md-nav__link">
+    Custom Script
   </a>
   
 </li>
@@ -642,13 +655,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#dependencies" class="md-nav__link">
-    Dependencies
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#usage-options" class="md-nav__link">
     Usage Options
   </a>
@@ -744,6 +750,26 @@
     Lab Streaming Layer
   </a>
   
+    <nav class="md-nav" aria-label="Lab Streaming Layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#visualize-the-streaming-data-using" class="md-nav__link">
+    Visualize the streaming data using:
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-script" class="md-nav__link">
+    Custom Script
+  </a>
+  
 </li>
         
       </ul>
@@ -774,14 +800,6 @@
 <p><code>sense.py</code> is a script that simplifies the interaction with the ScientISST Sense.</p>
 <p>It allows the selection of channels, sampling rate, and duration right from the command line.</p>
 <p>It also implements file data saving in the background (using a different thread) and also streaming via Lab Streaming Layer (LSL).</p>
-<h2 id="dependencies">Dependencies</h2>
-<ul>
-<li><a class="autorefs autorefs-internal" href="../../reference/scientisst-reference/#scientisst.scientisst.ScientISST">scientisst</a> - ScientISST Sense Python API</li>
-</ul>
-<!--- pyserial-->
-<ul>
-<li><a href="https://pypi.org/project/pylsl/">pylsl</a> (optional) - Used for streaming with LSL</li>
-</ul>
 <h2 id="usage-options">Usage Options</h2>
 <div class="highlight"><pre><span></span><code>$ python sense.py -h
 
@@ -878,8 +896,44 @@ Then, you'll need to find the serial port address using the Terminal:</p>
 <p>The following snippet will start streaming the default channels using <strong>LSL</strong>:
 <div class="highlight"><pre><span></span><code>python sense.py -s
 </code></pre></div></p>
-<p>Visualize the streaming data using:
+<h4 id="visualize-the-streaming-data-using">Visualize the streaming data using:</h4>
+<p>Taking advantage of the LSL, it is possible to plot the real-time data:
 <div class="highlight"><pre><span></span><code>python -m pylsl.examples.ReceiveAndPlot
+</code></pre></div></p>
+<h3 id="custom-script">Custom Script</h3>
+<p>It is possible to run custom code every time the <code>sense.py</code> script reads data from the device. To do so, create a file, <em>e.g.</em> <code>hello_world.py</code>, with your own class inheriting the <a href="https://github.com/scientisst/scientisst-sense-api-python/blob/main/sense/custom_script.py"><code>CustomScript</code></a> class:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">sense.custom_script</span> <span class="kn">import</span> <span class="n">CustomScript</span>
+
+<span class="k">class</span> <span class="nc">HelloWorld</span><span class="p">(</span><span class="n">CustomScript</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">on_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hello world!&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Run your custom code on start&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frames</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Received </span><span class="si">%s</span><span class="s2"> frames&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">frames</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">on_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;All done&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Then, you just have to provided its path:</p>
+<div class="highlight"><pre><span></span><code>python sense.py -d 1 -q --script hello_world.py
+</code></pre></div>
+<p>Output:
+<div class="highlight"><pre><span></span><code>...
+Connected!
+Hello world!
+Start acquisition
+Run your custom code on start
+Received 200 frames
+Received 200 frames
+Received 200 frames
+Received 200 frames
+Received 200 frames
+Stop acquisition
+All done
+Disconnected
 </code></pre></div></p>
 
   <hr>
@@ -887,7 +941,7 @@ Then, you'll need to find the serial port address using the Terminal:</p>
   <small>
     
       Last update:
-      2022-02-24
+      2022-04-29
     
   </small>
 </div>
@@ -1021,7 +1075,7 @@ Then, you'll need to find the serial port address using the Terminal:</p>
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections"], "search": "../../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.6e54b5cd.min.js"></script>
+      <script src="../../assets/javascripts/bundle.748e2769.min.js"></script>
       
     
   </body>
