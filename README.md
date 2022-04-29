@@ -1,7 +1,9 @@
 
 # scientisst-sense-api-python
 
-The ScientISST SENSE Python API
+The ScientISST SENSE Python API.
+
+Learn how to use it, check examples, and much more [here](https://scientisst.github.io/scientisst-sense-api-python/)!
 
 ## Dependencies
 
