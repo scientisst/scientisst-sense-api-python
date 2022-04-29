@@ -9,12 +9,21 @@ git clone https://github.com/scientisst/scientisst-sense-api-python.git
 
 ## Dependencies
 
+API:
 - PySerial
 
-Install it using `pip`:
+Sense:
+- pylsl
+- dbus
+
+Plot:
+- numpy
+- matplotlib
+
+Install them using `pip`:
 
 ```sh
-pip install pyserial
+pip install -r requirements.txt
 ```
 
-Start using it!
+Start having fun!

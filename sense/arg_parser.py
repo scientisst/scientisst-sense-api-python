@@ -69,6 +69,13 @@ class ArgParser:
             help="stream data using Lab Streaming Layer protocol. Use `python -m pylsl.examples.ReceiveAndPlot` to view stream",
         )
         self.parser.add_argument(
+            "--script",
+            dest="script",
+            help="send the received frames to a script that inherits the CustomScript class",
+            type=str,
+            default=None,
+        )
+        self.parser.add_argument(
             "-q",
             "--quiet",
             action="store_false",

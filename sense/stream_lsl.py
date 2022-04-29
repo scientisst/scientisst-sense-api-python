@@ -1,9 +1,6 @@
 # import pylsl
 from pylsl import StreamInfo, StreamOutlet, local_clock
-from threading import Thread, Event
-from queue import Queue
 import sys
-import time
 
 from sense.thread_builder import ThreadBuilder
 
