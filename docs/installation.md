@@ -10,13 +10,16 @@ git clone https://github.com/scientisst/scientisst-sense-api-python.git
 ## Dependencies
 
 API:
+
 - PySerial
 
 Sense:
+
 - pylsl
 - dbus
 
 Plot:
+
 - numpy
 - matplotlib
 

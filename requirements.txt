@@ -1,0 +1,5 @@
+pyserial
+pylsl
+dbus-python
+numpy
+matplotlib
