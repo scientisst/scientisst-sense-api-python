@@ -9,6 +9,7 @@ else:
 import time
 import re
 from math import log2
+import numpy as np
 
 from scientisst.frame import *
 from scientisst.state import *
@@ -248,7 +249,7 @@ class ScientISST:
         else:
             self.__num_frames = self.__bytes_to_read // self.__packet_size
 
-    def read(self, convert=True):
+    def read(self, convert=True, matrix=False):
         """
         Reads acquisition frames from the device.
 
@@ -256,9 +257,10 @@ class ScientISST:
 
         Args:
             convert (bool): Convert from raw to mV
+            matrix (bool): Return `Frames` in a `np.array` (matrix) form
 
         Returns:
-            frames (list): List of [`Frame`][scientisst.frame.Frame] objects retrieved from the device
+            frames (list): List of [`Frame`][scientisst.frame.Frame] objects retrieved from the device. If `matrix` is True, the `frames` corresponds to a `np.array` (matrix).
 
         Raises:
             ContactingDeviceError: If there is an error contacting the device.
@@ -335,7 +337,9 @@ class ScientISST:
                             byte_it += 2
                             mid_frame_flag = 0
                         if convert:
-                            f.mv[index] = self.__adc1_chars.esp_adc_cal_raw_to_voltage(f.a[index])
+                            f.mv[index] = self.__adc1_chars.esp_adc_cal_raw_to_voltage(
+                                f.a[index]
+                            )
             elif self.__api_mode == API_MODE_JSON:
                 print(bf)
             else:
@@ -344,7 +348,10 @@ class ScientISST:
             start += self.__packet_size
 
         if len(frames) == self.__num_frames:
-            return frames
+            if not matrix:
+                return frames
+            else:
+                return np.array([frame.to_matrix() for frame in frames])
         else:
             raise ContactingDeviceError()
 

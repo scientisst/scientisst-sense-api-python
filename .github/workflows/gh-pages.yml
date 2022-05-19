@@ -23,6 +23,7 @@ jobs:
           python3 -m pip install mkdocs-git-revision-date-plugin  # install git revision date plugin
           python3 -m pip install mkdocstrings                     # install mkdocstrings
           python3 -m pip install mkdocs-material                  # install material theme
+          python3 -m pip install numpy                           # install numpy
       - name: Build site
         run: mkdocs build
       - name: Deploy

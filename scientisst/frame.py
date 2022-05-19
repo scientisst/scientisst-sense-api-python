@@ -35,7 +35,7 @@ class Frame:
         self.a = [None] * num_channels
         self.mv = [None] * num_channels
 
-    def toMap(self):
+    def to_map(self):
         return {
             "sequence": self.seq,
             "analog": self.a,
@@ -43,7 +43,7 @@ class Frame:
             "mv": self.mv,
         }
 
-    def toString(self):
+    def to_string(self):
         return str(self.toMap())
 
     def __str__(self):
@@ -60,3 +60,13 @@ class Frame:
             self.digital[3],
             "\t".join(values),
         )
+
+    def to_matrix(self):
+        if self.mv[0]:
+            return (
+                [self.seq]
+                + self.digital
+                + [val for pair in zip(self.a, self.mv) for val in pair]
+            )
+        else:
+            return [self.seq] + self.digital + self.a
