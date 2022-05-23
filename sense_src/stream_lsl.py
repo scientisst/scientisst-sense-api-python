@@ -2,7 +2,7 @@
 from pylsl import StreamInfo, StreamOutlet, local_clock
 import sys
 
-from sense.thread_builder import ThreadBuilder
+from sense_src.thread_builder import ThreadBuilder
 
 
 class StreamLSL(ThreadBuilder):

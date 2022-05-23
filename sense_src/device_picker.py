@@ -82,7 +82,11 @@ class DevicePicker:
         bt_devices = []
         for device in devices:
             obj = proxyobj(bus, device, "org.freedesktop.DBus.Properties")
-            name = str(obj.Get("org.bluez.Device1", "Name"))
+            name = "unkown"
+            try:
+                name = str(obj.Get("org.bluez.Device1", "Name"))
+            except:
+                pass
             if "scientisst" in name.lower():
                 bt_devices.append(
                     {

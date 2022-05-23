@@ -4,16 +4,16 @@
 sense.py
 """
 
-VERSION = "0.1.4"
+VERSION = "0.1.5"
 
 import sys
 from scientisst import *
 from threading import Timer
 from threading import Event
-from sense.arg_parser import ArgParser
-from sense.custom_script import get_custom_script, CustomScript
-from sense.device_picker import DevicePicker
-from sense.file_writer import *
+from sense_src.arg_parser import ArgParser
+from sense_src.custom_script import get_custom_script, CustomScript
+from sense_src.device_picker import DevicePicker
+from sense_src.file_writer import *
 
 
 def run_scheduled_task(duration, stop_event):
@@ -25,8 +25,7 @@ def run_scheduled_task(duration, stop_event):
     return timer
 
 
-if __name__ == "__main__":
-
+def main():
     arg_parser = ArgParser()
     args = arg_parser.args
 
@@ -118,3 +117,7 @@ if __name__ == "__main__":
         scientisst.disconnect()
 
     sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,7 +1,7 @@
 import os
 import sys
 import importlib.util
-from sense.thread_builder import ThreadBuilder
+from sense_src.thread_builder import ThreadBuilder
 
 
 class CustomScript(ThreadBuilder):

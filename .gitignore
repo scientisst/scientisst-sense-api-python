@@ -1,3 +1,4 @@
+dist/
 **/__pycache__
 .vscode
 *.csv
@@ -5,3 +6,4 @@
 **/*.pyc
 site/
 .DS_Store
+*.egg-info

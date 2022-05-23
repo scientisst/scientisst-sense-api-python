@@ -1,6 +1,6 @@
 import sys
 from scientisst.scientisst import AX1, AX2
-from sense.thread_builder import ThreadBuilder
+from sense_src.thread_builder import ThreadBuilder
 from datetime import datetime
 
 
