@@ -474,6 +474,9 @@ class ScientISST:
         sys.stdout.write("Disconnected\n")
 
     def __setupSocket(self):
+        """
+        Create a socket in function of the comunication mode desired
+        """
         if self.com_mode == COM_MODE_BT:
             sys.stdout.write("Connecting to {}...\n".format(self.address))
             # Create the client socket
