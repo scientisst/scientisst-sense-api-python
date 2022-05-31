@@ -4,28 +4,21 @@
 sense.py
 """
 
-VERSION = "0.1.5"
+VERSION = "0.1.0"
 
 import sys
 from scientisst import *
 from threading import Timer
 from threading import Event
-from sense_src.arg_parser import ArgParser
-from sense_src.custom_script import get_custom_script, CustomScript
-from sense_src.device_picker import DevicePicker
-from sense_src.file_writer import *
-
-
-def run_scheduled_task(duration, stop_event):
-    def stop(stop_event):
-        stop_event.set()
-
-    timer = Timer(duration, stop, [stop_event])
-    timer.start()
-    return timer
+from sense.arg_parser import ArgParser
+from sense.device_picker import DevicePicker
+from sense.file_writer import *
+from PyQt5.QtWidgets import QApplication
+from scientisst.rt_plotter import MainWindow
 
 
 def main():
+
     arg_parser = ArgParser()
     args = arg_parser.args
 
@@ -44,79 +37,76 @@ def main():
 
     scientisst = ScientISST(address, log=args.log)
 
+    if args.stream:
+        from sense.stream_lsl import StreamLSL
+
+        lsl = StreamLSL(
+            args.channels,
+            args.fs,
+            address,
+        )
+    else:
+        lsl = None
+
+    if args.output:
+        file_writer = FileWriter(
+            args.output, address, args.fs, args.channels, args.convert
+        )
+    else:
+        file_writer = None
+
+    stop_event = Event()
+
+    scientisst.start(args.fs, args.channels)
+    if args.stream:
+        lsl.start()
+
+    if args.output:
+        file_writer.start()
+
+    sys.stdout.write("Start acquisition\n")
+
+    if args.duration > 0:
+        run_scheduled_task(args.duration, stop_event)
     try:
-        if args.output:
-            firmware_version = scientisst.version_and_adc_chars(print=False)
-            file_writer = FileWriter(
-                args.output,
-                address,
-                args.fs,
-                args.channels,
-                args.convert,
-                VERSION,
-                firmware_version,
-            )
-        if args.stream:
-            from sense.stream_lsl import StreamLSL
+        if args.verbose:
+            header = "\t".join(get_header(args.channels, args.convert)) + "\n"
+            sys.stdout.write(header)
 
-            lsl = StreamLSL(
-                args.channels,
-                args.fs,
-                address,
-            )
-        if args.script:
-            script = get_custom_script(args.script)
+            if args.rt_signals:
+                app = QApplication(sys.argv)
+                form = MainWindow(stop_event, scientisst, args, file_buffer=file_writer, lsl_buffer=lsl)
+                form.show()
+                app.exec_()
 
-        stop_event = Event()
-
-        scientisst.start(args.fs, args.channels)
-        sys.stdout.write("Start acquisition\n")
-
-        if args.output:
-            file_writer.start()
-        if args.stream:
-            lsl.start()
-        if args.script:
-            script.start()
-
-        timer = None
-        if args.duration > 0:
-            timer = run_scheduled_task(args.duration, stop_event)
-        try:
+        while not stop_event.is_set():
+            frames = scientisst.read(convert=args.convert)
+            if args.stream:
+                lsl.put(frames)
+            if args.output:
+                file_writer.put(frames)
             if args.verbose:
-                header = "\t".join(get_header(args.channels, args.convert)) + "\n"
-                sys.stdout.write(header)
-            while not stop_event.is_set():
-                frames = scientisst.read(convert=args.convert)
-                if args.output:
-                    file_writer.put(frames)
-                if args.stream:
-                    lsl.put(frames)
-                if args.script:
-                    script.put(frames)
-                if args.verbose:
-                    sys.stdout.write("{}\n".format(frames[0]))
-        except KeyboardInterrupt:
-            if args.duration and timer:
-                timer.cancel()
-            pass
+                sys.stdout.write("{}\n".format(frames[0]))
+    except KeyboardInterrupt:
+        pass
+    sys.stdout.write("Stop acquisition\n")
+    if args.stream:
+        lsl.stop()
+    if args.output:
+        file_writer.stop()
 
-        scientisst.stop()
-        # let the acquisition stop before stoping other threads
-        time.sleep(0.25)
-
-        sys.stdout.write("Stop acquisition\n")
-        if args.output:
-            file_writer.stop()
-        if args.stream:
-            lsl.stop()
-        if args.script:
-            script.stop()
-
-    finally:
-        scientisst.disconnect()
+    scientisst.stop()
+    scientisst.disconnect()
 
     sys.exit(0)
+
+
+def run_scheduled_task(duration, stop_event):
+    def stop(stop_event):
+        stop_event.set()
+
+    timer = Timer(duration, stop, [stop_event])
+    timer.start()
 
 
 if __name__ == "__main__":
