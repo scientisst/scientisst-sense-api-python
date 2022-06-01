@@ -424,22 +424,25 @@ class ScientISST:
 
         self.__send(cmd)
 
-    def dac(self, pwm_output):
+    def dac(self, voltage):
         """
-        Assigns the analog (PWM) output value (ScientISST 2 only).
+        Assigns the analog (DAC) output value (ScientISST 2 only).
 
         Args:
-            pwm_output (int): Analog output value to set (0...255).
+            voltage (float): Analog output value to set [0V, 3.3V].
 
         Raises:
-            InvalidParameterError: If the pwm_output value is outside of its range, 0-255.
+            InvalidParameterError: If the voltage value is outside of its range, 0-255.
         """
-        if pwm_output < 0 or pwm_output > 255:
+        if voltage < 0 or voltage > 3.3:
             raise InvalidParameterError()
 
         cmd = 0xA3  # 1  0  1  0  0  0  1  1 - Set dac output
 
-        cmd |= pwm_output << 8
+        #Convert from voltage to raw:
+        raw = int(voltage*255/3.3)
+
+        cmd |= raw << 8
         self.__send(cmd)
 
     # TODO: test with ScientISST Sense v2
