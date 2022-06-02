@@ -429,7 +429,7 @@ class ScientISST:
         Assigns the analog (DAC) output value (ScientISST 2 only).
 
         Args:
-            voltage (float): Analog output value to set [0V, 3.3V].
+            voltage (float): Analog output value to set (0V-3.3V).
 
         Raises:
             InvalidParameterError: If the voltage value is outside of its range, 0-255.
