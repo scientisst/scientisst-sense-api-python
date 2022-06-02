@@ -443,7 +443,7 @@ class ScientISST:
         raw = int(voltage*255/3.3)
 
         cmd |= raw << 8
-        self.__send(cmd)
+        self.__send(cmd, nrOfBytes=2)
 
     # TODO: test with ScientISST Sense v2
     def state(self):
