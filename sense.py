@@ -4,7 +4,7 @@
 sense.py
 """
 
-VERSION = "0.1.5"
+VERSION = "0.1.6"
 
 import sys
 from scientisst import *
@@ -57,7 +57,7 @@ def main():
                 firmware_version,
             )
         if args.stream:
-            from sense.stream_lsl import StreamLSL
+            from sense_src.stream_lsl import StreamLSL
 
             lsl = StreamLSL(
                 args.channels,
