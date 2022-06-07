@@ -50,48 +50,23 @@ class DevicePicker:
             return options, labels
 
     def __get_linux_bth_devices(self):
-        import dbus
 
-        def proxyobj(bus, path, interface):
-            """commodity to apply an interface to a proxy object"""
-            obj = bus.get_object("org.bluez", path)
-            return dbus.Interface(obj, interface)
+        import pydbus
 
-        def filter_by_interface(objects, interface_name):
-            """filters the objects based on their support
-            for the specified interface"""
-            result = []
-            for path in objects.keys():
-                interfaces = objects[path]
-                for interface in interfaces.keys():
-                    if interface == interface_name:
-                        result.append(path)
-            return result
+        bt_devices = {}
 
-        bus = dbus.SystemBus()
+        bus = pydbus.SystemBus()
+        mngr = bus.get("org.bluez", "/")
 
-        # we need a dbus object manager
-        manager = proxyobj(bus, "/", "org.freedesktop.DBus.ObjectManager")
-        objects = manager.GetManagedObjects()
+        mngd_objs = mngr.GetManagedObjects()
+        for path in mngd_objs:
+            addr = mngd_objs[path].get("org.bluez.Device1", {}).get("Address")
+            name = mngd_objs[path].get("org.bluez.Device1", {}).get("Name")
 
-        # once we get the objects we have to pick the bluetooth devices.
-        # They support the org.bluez.Device1 interface
-        devices = filter_by_interface(objects, "org.bluez.Device1")
+            if name and "scientisst" in name.lower() and addr not in bt_devices:
+                bt_devices[addr] = {
+                    "name": name,
+                    "addr": addr,
+                }
 
-        # now we are ready to get the informations we need
-        bt_devices = []
-        for device in devices:
-            obj = proxyobj(bus, device, "org.freedesktop.DBus.Properties")
-            name = "unkown"
-            try:
-                name = str(obj.Get("org.bluez.Device1", "Name"))
-            except:
-                pass
-            if "scientisst" in name.lower():
-                bt_devices.append(
-                    {
-                        "name": name,
-                        "addr": str(obj.Get("org.bluez.Device1", "Address")),
-                    }
-                )
-        return bt_devices
+        return bt_devices.values()

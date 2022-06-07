@@ -16,7 +16,7 @@ API:
 Sense:
 
 - pylsl
-- dbus
+- pydbus
 
 Plot:
 
