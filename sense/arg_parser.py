@@ -93,6 +93,7 @@ class ArgParser:
             help="log sent/received bytes",
         )
         self.parser.add_argument(
+            "-m",
             "--com_mode",
             dest="com_mode",
             type=str,

@@ -1,9 +1,10 @@
 import sys
 
 
-#if sys.platform == "linux":
+# if sys.platform == "linux":
 import socket
-#else:
+
+# else:
 import serial
 
 import time
@@ -15,6 +16,7 @@ from scientisst.state import *
 from scientisst.exceptions import *
 from scientisst.esp_adc.esp_adc import *
 from scientisst.constants import *
+
 
 class ScientISST:
     """ScientISST Device class
@@ -55,14 +57,14 @@ class ScientISST:
             and api != API_MODE_JSON
             and api != API_MODE_BITALINO
         ):
-            raise InvalidParameterError()            
+            raise InvalidParameterError()
 
         self.com_mode = com_mode
         self.address = address
         self.speed = serial_speed
         self.__log = log
 
-        #Setup socket in function of com_mode argument
+        # Setup socket in function of com_mode argument
         self.__setupSocket()
 
         # try to connect to board
@@ -80,7 +82,7 @@ class ScientISST:
                     raise ContactingDeviceError()
 
         sys.stdout.write("Connected!\n")
-    
+
     def version_and_adc_chars(self, print=True):
         """
         Gets the device firmware version string and esp_adc_characteristics
@@ -466,6 +468,7 @@ class ScientISST:
         if self.__num_chs != 0:
             self.stop()
         if self.__socket:
+            self.__socket.shutdown(socket.SHUT_RDWR)
             self.__socket.close()
             self.__socket = None
         elif self.__serial:
@@ -478,9 +481,10 @@ class ScientISST:
             sys.stdout.write("Connecting to {}...\n".format(self.address))
             # Create the client socket
             if sys.platform == "linux":
-                #Check if address is a valid bt MAC address
+                # Check if address is a valid bt MAC address
                 if not re.match(
-                    "[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", self.address.lower()
+                    "[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$",
+                    self.address.lower(),
                 ):
                     raise InvalidAddressError()
 
@@ -490,23 +494,36 @@ class ScientISST:
                 self.__socket.connect((self.address, 1))
             else:
                 self.__serial = serial.Serial(
-                    address, serial_speed, timeout=TIMEOUT_IN_SECONDS
+                    self.address, self.serial_speed, timeout=TIMEOUT_IN_SECONDS
                 )
         elif self.com_mode == COM_MODE_TCP_SERVER:
             if not self.address.isdigit():
                 raise InvalidAddressError()
 
             port = int(self.address)
-            
+
             with socket.socket() as s:
-                s.bind(('', port))
-                print("Binded port %d on all interfaces" % (port));
+                s.bind(("", port))
+                print("Binded port %d on all interfaces" % (port))
 
                 s.listen(5)
                 print("TCP Server created. Waiting for ScientISST to connect...")
 
-                self.__socket, addr = s.accept() 
+                self.__socket, addr = s.accept()
                 print("ScientISST with address", addr, " connected")
+
+        elif self.com_mode == COM_MODE_TCP_AP:
+            if isinstance(self.address, str):
+                if not self.address.isdigit():
+                    raise InvalidAddressError()
+                port = int(self.address)
+            elif isinstance(self.address, int):
+                port = self.address
+            else:
+                raise InvalidAddressError()
+
+            self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.__socket.connect(("scientisst.local", port))
 
         else:
             raise InvalidParameterError
@@ -603,10 +620,10 @@ class ScientISST:
         Send data
         """
 
-        if(nrOfBytes <= 4):
+        if nrOfBytes <= 4:
             nrOfBytes = 4
         else:
-            raise ValueError("Maximum send command size is 4 bytes");
+            raise ValueError("Maximum send command size is 4 bytes")
 
         if type(command) is int:
             if command != 0:
