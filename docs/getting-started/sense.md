@@ -157,10 +157,10 @@ python -m pylsl.examples.ReceiveAndPlot
 
 ### Custom Script
 
-It is possible to run custom code every time the `sense.py` script reads data from the device. To do so, create a file, *e.g.* `hello_world.py`, with your own class inheriting the [`CustomScript`](https://github.com/scientisst/scientisst-sense-api-python/blob/main/sense/custom_script.py) class:
+It is possible to run custom code every time the `sense.py` script reads data from the device. To do so, create a file, *e.g.* `hello_world.py`, with your own class inheriting the [`CustomScript`](https://github.com/scientisst/scientisst-sense-api-python/blob/main/sense_src/custom_script.py) class:
 
 ```python
-from sense.custom_script import CustomScript
+from sense import CustomScript
 
 class HelloWorld(CustomScript):
     def on_init(self):
