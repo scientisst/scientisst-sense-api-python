@@ -2,9 +2,8 @@ name: build and deploy mkdocs to github pages
 on:
   push:
     tags:
-      - '*'
-    branches:
-      - main
+      - v[0-9]+.[0-9]+.[0-9]+
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
