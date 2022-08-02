@@ -1,2 +1,3 @@
-# __all__ = ["scientisst", "frame", "state"]
 from scientisst.scientisst import *
+
+__version__ = "1.0.2"

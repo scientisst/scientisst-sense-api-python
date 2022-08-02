@@ -4,10 +4,9 @@
 sense.py
 """
 
-VERSION = "0.1.7"
-
 import sys
 from scientisst import *
+from scientisst import __version__
 from threading import Timer
 from threading import Event
 from sense_src.arg_parser import ArgParser
@@ -30,7 +29,7 @@ def main():
     args = arg_parser.args
 
     if args.version:
-        sys.stdout.write("sense.py version {}\n".format(VERSION))
+        sys.stdout.write("sense.py version {}\n".format(__version__))
         sys.exit(0)
 
     if args.address:
@@ -56,7 +55,7 @@ def main():
                 args.fs,
                 args.channels,
                 args.convert,
-                VERSION,
+                __version__,
                 firmware_version,
             )
         if args.stream:
