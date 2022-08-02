@@ -837,14 +837,12 @@ options:
 <h2 id="automatic-selection">Automatic Selection</h2>
 <ol>
 <li>Pair your device</li>
-<li>
-<p>Run:</p>
+<li>Run:</li>
+</ol>
 <div class="highlight"><pre><span></span><code>python sense.py
 </code></pre></div>
-</li>
-<li>
-<p>Select the device from the list displayed:</p>
-</li>
+<ol>
+<li>Select the device from the list displayed:</li>
 </ol>
 <div class="highlight"><pre><span></span><code>ScientISST devices:
 [1] ScientISST-ab-de - 08:3A:F2:49:AB:DE
@@ -860,9 +858,9 @@ scan on
 pair XX:XX:XX:XX:XX
 trust XX:XX:XX:XX:XX
 </code></pre></div>
-<p>You can now run the <code>sense.py</code> script:
+<p>You can now run the <code>sense.py</code> script:</p>
 <div class="highlight"><pre><span></span><code>python sense.py XX:XX:XX:XX:XX
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="mac">Mac</h3>
 <p>First, you need to pair the ScientISST sense device in the Bluetooth Settings section.
 Then, you'll need to find the serial port address using the Terminal:</p>
@@ -881,33 +879,33 @@ Then, you'll need to find the serial port address using the Terminal:</p>
 </code></pre></div>
 <h2 id="examples">Examples</h2>
 <h3 id="single-channel">Single Channel</h3>
-<p>The following snippet will start streaming channel <code>A1</code>:
+<p>The following snippet will start streaming channel <code>A1</code>:</p>
 <div class="highlight"><pre><span></span><code>python sense.py -c 1
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="frequency">Frequency</h3>
-<p>The following snippet will start streaming channel <code>A1</code> at 100 Hz:
+<p>The following snippet will start streaming channel <code>A1</code> at 100 Hz:</p>
 <div class="highlight"><pre><span></span><code>python sense.py -c 1 -f 100
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="multiple-channels">Multiple Channels</h3>
-<p>The following snippet will start streaming channels <code>A1</code>,<code>A2</code>,<code>A3</code>,<code>A4</code>:
+<p>The following snippet will start streaming channels <code>A1</code>,<code>A2</code>,<code>A3</code>,<code>A4</code>:</p>
 <div class="highlight"><pre><span></span><code>python sense.py -c 1,2,3,4
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="save-to-file">Save to File</h3>
-<p>The following snippet will start recording the default channels (<code>A1</code>,<code>A2</code>,<code>A3</code>,<code>A4</code>,<code>A5</code>,<code>A6</code>) to the file <code>output.csv</code>:
+<p>The following snippet will start recording the default channels (<code>A1</code>,<code>A2</code>,<code>A3</code>,<code>A4</code>,<code>A5</code>,<code>A6</code>) to the file <code>output.csv</code>:</p>
 <div class="highlight"><pre><span></span><code>python sense.py -o output.csv
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="duration">Duration</h3>
-<p>The following snippet will start recording the default channels for <strong>10 seconds</strong>:
+<p>The following snippet will start recording the default channels for <strong>10 seconds</strong>:</p>
 <div class="highlight"><pre><span></span><code>python sense.py -o output.csv -d 10
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="lab-streaming-layer">Lab Streaming Layer</h3>
-<p>The following snippet will start streaming the default channels using <strong>LSL</strong>:
+<p>The following snippet will start streaming the default channels using <strong>LSL</strong>:</p>
 <div class="highlight"><pre><span></span><code>python sense.py -s
-</code></pre></div></p>
+</code></pre></div>
 <h4 id="visualize-the-streaming-data-using">Visualize the streaming data using:</h4>
-<p>Taking advantage of the LSL, it is possible to plot the real-time data:
+<p>Taking advantage of the LSL, it is possible to plot the real-time data:</p>
 <div class="highlight"><pre><span></span><code>python -m pylsl.examples.ReceiveAndPlot
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="custom-script">Custom Script</h3>
 <p>It is possible to run custom code every time the <code>sense.py</code> script reads data from the device. To do so, create a file, <em>e.g.</em> <code>hello_world.py</code>, with your own class inheriting the <a href="https://github.com/scientisst/scientisst-sense-api-python/blob/main/sense_src/custom_script.py"><code>CustomScript</code></a> class:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">sense</span> <span class="kn">import</span> <span class="n">CustomScript</span>
@@ -928,7 +926,7 @@ Then, you'll need to find the serial port address using the Terminal:</p>
 <p>Then, you just have to provided its path:</p>
 <div class="highlight"><pre><span></span><code>python sense.py -d 1 -q --script hello_world.py
 </code></pre></div>
-<p>Output:
+<p>Output:</p>
 <div class="highlight"><pre><span></span><code>...
 Connected!
 Hello world!
@@ -942,7 +940,7 @@ Received 200 frames
 Stop acquisition
 All done
 Disconnected
-</code></pre></div></p>
+</code></pre></div>
 
   <hr>
 <div class="md-source-file">
