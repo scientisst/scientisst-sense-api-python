@@ -103,8 +103,8 @@ class ArgParser:
         )
         self.parser.add_argument(
             "-m",
-            "--com_mode",
-            dest="com_mode",
+            "--mode",
+            dest="mode",
             type=str,
             default=COM_MODE_BT,
             help="The communication mode. Currently supported modes: "

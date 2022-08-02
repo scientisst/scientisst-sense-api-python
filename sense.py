@@ -36,13 +36,16 @@ def main():
     if args.address:
         address = args.address
     else:
-        address = DevicePicker().select_device()
-        if not address:
-            arg_parser.error("No paired device found")
+        if args.mode == COM_MODE_BT:
+            address = DevicePicker().select_device()
+            if not address:
+                arg_parser.error("No paired device found")
+        else:
+            arg_parser.error("No address provided")
 
     args.channels = sorted(map(int, args.channels.split(",")))
 
-    scientisst = ScientISST(address, com_mode=args.com_mode, log=args.log)
+    scientisst = ScientISST(address, com_mode=args.mode, log=args.log)
 
     try:
         if args.output:

@@ -14,7 +14,12 @@ usage: sense.py [args] address
 description: The program connects to the ScientISST Sense device and starts an acquisition, providing the option to store the received data in a .csv file.
 
 positional arguments:
-  address               Linux: bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port
+  address               For BTH communication:
+                                Linux: BTH MAC address
+                                Mac: serial port address
+                                Windows: BTH serial COM port
+                        For TCP/UDP communication:
+                                All plataforms: server port.
 
 options:
   -h, --help            show this help message and exit
@@ -28,9 +33,11 @@ options:
                         write report to output file, default: None
   -r, --raw             do not convert from raw to mV
   -s, --lsl             stream data using Lab Streaming Layer protocol. Use `python -m pylsl.examples.ReceiveAndPlot` to view stream
+  --script SCRIPT       send the received frames to a script that inherits the CustomScript class
   -q, --quiet           don't print ScientISST frames
   -v, --version         show sense.py version
   --verbose             log sent/received bytes
+  -m MODE, --mode MODE  The communication mode. Currently supported modes: bt_classic, tcp, tcp_ap. Default: bt_classic
 ```
 
 ## Automatic Selection
