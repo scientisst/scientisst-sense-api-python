@@ -45,9 +45,9 @@ options:
 1. Pair your device
 2. Run:
 
-    ```
-    python sense.py
-    ```
+   ```
+   python sense.py
+   ```
 
 3. Select the device from the list displayed:
 
@@ -59,7 +59,6 @@ Connect to:
 ```
 
 Then hit `CTRL-C` when you wish to stop.
-
 
 ## Manual Selection
 
@@ -75,6 +74,7 @@ trust XX:XX:XX:XX:XX
 ```
 
 You can now run the `sense.py` script:
+
 ```sh
 python sense.py XX:XX:XX:XX:XX
 ```
@@ -96,7 +96,6 @@ You can now run the `sense.py` script:
 python sense.py /dev/tty.ScientISST-XX-XX-SPP_SE
 ```
 
-
 ### Windows
 
 Turn the ScientISST Sense board on.
@@ -116,6 +115,7 @@ python sense.py COMX
 ### Single Channel
 
 The following snippet will start streaming channel `A1`:
+
 ```
 python sense.py -c 1
 ```
@@ -123,6 +123,7 @@ python sense.py -c 1
 ### Frequency
 
 The following snippet will start streaming channel `A1` at 100 Hz:
+
 ```
 python sense.py -c 1 -f 100
 ```
@@ -130,6 +131,7 @@ python sense.py -c 1 -f 100
 ### Multiple Channels
 
 The following snippet will start streaming channels `A1`,`A2`,`A3`,`A4`:
+
 ```
 python sense.py -c 1,2,3,4
 ```
@@ -137,6 +139,7 @@ python sense.py -c 1,2,3,4
 ### Save to File
 
 The following snippet will start recording the default channels (`A1`,`A2`,`A3`,`A4`,`A5`,`A6`) to the file `output.csv`:
+
 ```
 python sense.py -o output.csv
 ```
@@ -144,6 +147,7 @@ python sense.py -o output.csv
 ### Duration
 
 The following snippet will start recording the default channels for **10 seconds**:
+
 ```
 python sense.py -o output.csv -d 10
 ```
@@ -151,6 +155,7 @@ python sense.py -o output.csv -d 10
 ### Lab Streaming Layer
 
 The following snippet will start streaming the default channels using **LSL**:
+
 ```
 python sense.py -s
 ```
@@ -158,13 +163,14 @@ python sense.py -s
 #### Visualize the streaming data using:
 
 Taking advantage of the LSL, it is possible to plot the real-time data:
+
 ```
 python -m pylsl.examples.ReceiveAndPlot
 ```
 
 ### Custom Script
 
-It is possible to run custom code every time the `sense.py` script reads data from the device. To do so, create a file, *e.g.* `hello_world.py`, with your own class inheriting the [`CustomScript`](https://github.com/scientisst/scientisst-sense-api-python/blob/main/sense_src/custom_script.py) class:
+It is possible to run custom code every time the `sense.py` script reads data from the device. To do so, create a file, _e.g._ `hello_world.py`, with your own class inheriting the [`CustomScript`](https://github.com/scientisst/scientisst-sense-api-python/blob/main/sense_src/custom_script.py) class:
 
 ```python
 from sense import CustomScript
@@ -190,6 +196,7 @@ python sense.py -d 1 -q --script hello_world.py
 ```
 
 Output:
+
 ```
 ...
 Connected!
