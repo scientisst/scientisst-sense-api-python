@@ -42,7 +42,7 @@ def main():
 
     args.channels = sorted(map(int, args.channels.split(",")))
 
-    scientisst = ScientISST(address, log=args.log)
+    scientisst = ScientISST(address, com_mode=args.com_mode, log=args.log)
 
     try:
         if args.output:

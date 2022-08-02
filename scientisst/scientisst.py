@@ -1,10 +1,11 @@
 import sys
 
 
-if sys.platform == "linux":
-    import socket
-else:
-    import serial
+# if sys.platform == "linux":
+import socket
+
+# else:
+import serial
 
 import time
 import re
@@ -15,25 +16,7 @@ from scientisst.frame import *
 from scientisst.state import *
 from scientisst.exceptions import *
 from scientisst.esp_adc.esp_adc import *
-
-TIMEOUT_IN_SECONDS = 5
-
-# API_MODE
-API_MODE_BITALINO = 1
-API_MODE_SCIENTISST = 2
-API_MODE_JSON = 3
-
-# CHANNELS
-AI1 = 1
-AI2 = 2
-AI3 = 3
-AI4 = 4
-AI5 = 5
-AI6 = 6
-AX1 = 7
-AX2 = 8
-
-MAX_BUFFER_SIZE = 4096
+from scientisst.constants import *
 
 
 class ScientISST:
@@ -60,6 +43,7 @@ class ScientISST:
         log=False,
         api=API_MODE_SCIENTISST,
         connection_tries=5,
+        com_mode=COM_MODE_BT,
     ):
         """
         Args:
@@ -69,12 +53,6 @@ class ScientISST:
             api (int): The desired API mode for the device
         """
 
-        if sys.platform == "linux":
-            if not re.match(
-                "[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", address.lower()
-            ):
-                raise InvalidAddressError()
-
         if (
             api != API_MODE_SCIENTISST
             and api != API_MODE_JSON
@@ -82,22 +60,13 @@ class ScientISST:
         ):
             raise InvalidParameterError()
 
+        self.com_mode = com_mode
         self.address = address
         self.speed = serial_speed
         self.__log = log
 
-        sys.stdout.write("Connecting to {}...\n".format(address))
-        # Create the client socket
-        if sys.platform == "linux":
-            self.__socket = socket.socket(
-                socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM
-            )
-            self.__socket.settimeout(TIMEOUT_IN_SECONDS)
-            self.__socket.connect((address, 1))
-        else:
-            self.__serial = serial.Serial(
-                address, serial_speed, timeout=TIMEOUT_IN_SECONDS
-            )
+        # Setup socket in function of com_mode argument
+        self.__setupSocket()
 
         # try to connect to board
         while True:
@@ -134,7 +103,7 @@ class ScientISST:
         cmd = b"\x07"
         self.__send(cmd)
 
-        result = self.__recv(1024)
+        result = self.__recv(1024, waitall_flag=False)
 
         if result == b"":
             raise ContactingDeviceError()
@@ -491,12 +460,70 @@ class ScientISST:
         if self.__num_chs != 0:
             self.stop()
         if self.__socket:
+            self.__socket.shutdown(socket.SHUT_RDWR)
             self.__socket.close()
             self.__socket = None
         elif self.__serial:
             self.__serial.close()
             self.__serial = None
         sys.stdout.write("Disconnected\n")
+
+    def __setupSocket(self):
+        """
+        Create a socket in function of the comunication mode desired
+        """
+        if self.com_mode == COM_MODE_BT:
+            sys.stdout.write("Connecting to {}...\n".format(self.address))
+            # Create the client socket
+            if sys.platform == "linux":
+                # Check if address is a valid bt MAC address
+                if not re.match(
+                    "[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$",
+                    self.address.lower(),
+                ):
+                    raise InvalidAddressError()
+
+                self.__socket = socket.socket(
+                    socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM
+                )
+                self.__socket.connect((self.address, 1))
+            else:
+                self.__serial = serial.Serial(
+                    self.address, self.serial_speed, timeout=TIMEOUT_IN_SECONDS
+                )
+        elif self.com_mode == COM_MODE_TCP_SERVER:
+            if not self.address.isdigit():
+                raise InvalidAddressError()
+
+            port = int(self.address)
+
+            with socket.socket() as s:
+                s.bind(("", port))
+                print("Binded port %d on all interfaces" % (port))
+
+                s.listen(5)
+                print("TCP Server created. Waiting for ScientISST to connect...")
+
+                self.__socket, addr = s.accept()
+                print("ScientISST with address", addr, " connected")
+
+        elif self.com_mode == COM_MODE_TCP_AP:
+            if isinstance(self.address, str):
+                if not self.address.isdigit():
+                    raise InvalidAddressError()
+                port = int(self.address)
+            elif isinstance(self.address, int):
+                port = self.address
+            else:
+                raise InvalidAddressError()
+
+            self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.__socket.connect(("scientisst.local", port))
+
+        else:
+            raise InvalidParameterError
+
+        self.__socket.settimeout(TIMEOUT_IN_SECONDS)
 
     def __getPacketSize(self):
         packet_size = 0
@@ -583,10 +610,16 @@ class ScientISST:
 
         return crc == (data[-1] & 0x0F)
 
-    def __send(self, command, nrOfBytes=None):
+    def __send(self, command, nrOfBytes=0):
         """
         Send data
         """
+
+        if nrOfBytes <= 4:
+            nrOfBytes = 4
+        else:
+            raise ValueError("Maximum send command size is 4 bytes")
+
         if type(command) is int:
             if command != 0:
                 command = command.to_bytes(
@@ -612,13 +645,16 @@ class ScientISST:
         # else:
         # raise ContactingDeviceError()
 
-    def __recv(self, nrOfBytes):
+    def __recv(self, nrOfBytes, waitall_flag=True):
         """
         Receive data
         """
         result = None
         if self.__socket:
-            result = self.__socket.recv(nrOfBytes, socket.MSG_WAITALL)
+            if waitall_flag:
+                result = self.__socket.recv(nrOfBytes, socket.MSG_WAITALL)
+            else:
+                result = self.__socket.recv(nrOfBytes)
         else:
             result = self.__serial.read(nrOfBytes)
         if self.__log:
