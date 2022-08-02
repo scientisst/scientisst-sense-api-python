@@ -28,12 +28,10 @@ class Frame:
 
     digital = [0] * 4
     seq = -1
-    a = None
-    mv = None
 
     def __init__(self, num_channels):
-        self.a = [None] * num_channels
-        self.mv = [None] * num_channels
+        self.a = [0] * num_channels
+        self.mv = [0] * num_channels
 
     def to_map(self):
         return {
@@ -42,9 +40,6 @@ class Frame:
             "digital": self.digital,
             "mv": self.mv,
         }
-
-    def to_string(self):
-        return str(self.toMap())
 
     def __str__(self):
         if self.mv[0]:

@@ -23,7 +23,7 @@ class ScientISST:
     """ScientISST Device class
 
     Attributes:
-        address (str): The device serial port address ("/dev/example")
+        address (str): The device serial port address ("/dev/example") or TCP port
 
         serial_speed (int, optional): The serial port bitrate.
     """
@@ -238,7 +238,7 @@ class ScientISST:
             UnknownError: If the device stopped sending frames for some unknown reason.
         """
 
-        frames = [None] * self.__num_frames
+        frames = []
 
         if self.__num_chs == 0:
             raise DeviceNotInAcquisitionError()
@@ -262,7 +262,7 @@ class ScientISST:
                 bf = result[start : start + self.__packet_size]
 
             f = Frame(self.__num_chs)
-            frames[it] = f
+            frames.append(f)
             if self.__api_mode == API_MODE_SCIENTISST:
                 # Get seq number and IO states
                 f.seq = bf[-1] >> 4
@@ -408,8 +408,8 @@ class ScientISST:
 
         cmd = 0xA3  # 1  0  1  0  0  0  1  1 - Set dac output
 
-        #Convert from voltage to raw:
-        raw = int(voltage*255/3.3)
+        # Convert from voltage to raw:
+        raw = int(voltage * 255 / 3.3)
 
         cmd |= raw << 8
         self.__send(cmd, nrOfBytes=2)
@@ -554,29 +554,6 @@ class ScientISST:
             # for the I/Os and seq+crc bytes
             packet_size += 2
 
-        elif self.__api_mode == API_MODE_JSON:
-            for i in range(self.__num_chs):
-                # If it's internal ch
-                if self.__chs[i] <= 6:
-                    # sprintf(aux_str, "AI%d", chs[i]);
-                    # member_name.SetString(aux_str, d.GetAllocator());
-                    # member_value.SetString(value_internal_str, d.GetAllocator());
-                    # d.AddMember(member_name, member_value, d.GetAllocator());
-                    packet_size += 3  # AI%d
-                    packet_size += 2  # 0-4095 = 12 bits <= 2 bytes
-                else:
-                    packet_size += 3  # AX%d
-                    packet_size += 4  # 0-16777215 = 24 bits <= 4 bytes
-            # Add IO state json objects
-            # d.AddMember("I1", "0", d.GetAllocator());
-            # d.AddMember("I2", "0", d.GetAllocator());
-            # d.AddMember("O1", "0", d.GetAllocator());
-            # d.AddMember("O2", "0", d.GetAllocator());
-            packet_size += 3  # I1 + 0|1
-            packet_size += 3  # I2 + 0|1
-            packet_size += 3  # O1 + 0|1
-            packet_size += 3  # O1 + 0|1
-
         else:
             raise NotSupportedError()
 
@@ -640,8 +617,10 @@ class ScientISST:
             )
         if self.__socket:
             self.__socket.send(command)
-        else:
+        elif self.__serial:
             self.__serial.write(command)
+        else:
+            raise InvalidParameterError()
         # else:
         # raise ContactingDeviceError()
 
@@ -655,8 +634,10 @@ class ScientISST:
                 result = self.__socket.recv(nrOfBytes, socket.MSG_WAITALL)
             else:
                 result = self.__socket.recv(nrOfBytes)
-        else:
+        elif self.__serial:
             result = self.__serial.read(nrOfBytes)
+        else:
+            raise InvalidParameterError()
         if self.__log:
             if nrOfBytes > 1:
                 sys.stdout.write(
@@ -674,8 +655,10 @@ class ScientISST:
         """
         if self.__socket:
             self.__socket.setblocking(False)
-        else:
+        elif self.__serial:
             self.__serial.timeout = 0
+        else:
+            raise InvalidParameterError()
 
         try:
             while self.__recv(1):
@@ -685,5 +668,7 @@ class ScientISST:
 
         if self.__socket:
             self.__socket.setblocking(True)
-        else:
+        elif self.__serial:
             self.__serial.timeout = TIMEOUT_IN_SECONDS
+        else:
+            raise InvalidParameterError()
