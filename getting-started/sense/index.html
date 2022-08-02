@@ -9,7 +9,7 @@
       
       
       <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.3.9">
+      <meta name="generator" content="mkdocs-1.3.1, mkdocs-material-8.3.9">
     
     
       
@@ -809,7 +809,12 @@ usage: sense.py [args] address
 description: The program connects to the ScientISST Sense device and starts an acquisition, providing the option to store the received data in a .csv file.
 
 positional arguments:
-  address               Linux: bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port
+  address               For BTH communication:
+                                Linux: BTH MAC address
+                                Mac: serial port address
+                                Windows: BTH serial COM port
+                        For TCP/UDP communication:
+                                All plataforms: server port.
 
 options:
   -h, --help            show this help message and exit
@@ -823,9 +828,11 @@ options:
                         write report to output file, default: None
   -r, --raw             do not convert from raw to mV
   -s, --lsl             stream data using Lab Streaming Layer protocol. Use `python -m pylsl.examples.ReceiveAndPlot` to view stream
+  --script SCRIPT       send the received frames to a script that inherits the CustomScript class
   -q, --quiet           don&#39;t print ScientISST frames
   -v, --version         show sense.py version
   --verbose             log sent/received bytes
+  -m MODE, --mode MODE  The communication mode. Currently supported modes: bt_classic, tcp, tcp_ap. Default: bt_classic
 </code></pre></div>
 <h2 id="automatic-selection">Automatic Selection</h2>
 <ol>
@@ -942,7 +949,7 @@ Disconnected
   <small>
     
       Last update:
-      2022-07-07
+      2022-08-02
     
   </small>
 </div>
