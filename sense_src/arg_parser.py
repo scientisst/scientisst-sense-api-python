@@ -1,5 +1,5 @@
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawTextHelpFormatter
 from scientisst.constants import *
 
 
@@ -13,13 +13,15 @@ class ArgParser:
     def __init__(self):
         usage = "%(prog)s [args] address"
         description = "description: The program connects to the ScientISST Sense device and starts an acquisition, providing the option to store the received data in a .csv file."
-        self.parser = self.MyParser(usage=usage, description=description)
+        self.parser = self.MyParser(
+            usage=usage, description=description, formatter_class=RawTextHelpFormatter
+        )
 
         self.parser.add_argument(
             "address",
             nargs="?",
             type=str,
-            help="(For bluetooth communication) Linux, bluetooth MAC address, Mac: serial port address, Windows: bluetooth serial COM port\n (For TCP/UDP communication)All platforms: Server port.",
+            help="For BTH communication:\n\tLinux: BTH MAC address\n\tMac: serial port address\n\tWindows: BTH serial COM port\nFor TCP/UDP communication:\n\tAll plataforms: server port.",
         )
         self.parser.add_argument(
             "-f",
@@ -105,7 +107,10 @@ class ArgParser:
             dest="com_mode",
             type=str,
             default=COM_MODE_BT,
-            help="The communication mode. Currently supported modes: " + ", ".join(COM_MODE_LIST) + ". Default: " + COM_MODE_BT
+            help="The communication mode. Currently supported modes: "
+            + ", ".join(COM_MODE_LIST)
+            + ". Default: "
+            + COM_MODE_BT,
         )
         self.args = self.parser.parse_args()
 
