@@ -62,7 +62,7 @@ class ScientISST:
 
         self.com_mode = com_mode
         self.address = address
-        self.speed = serial_speed
+        self.serial_speed = serial_speed
         self.__log = log
 
         # Setup socket in function of com_mode argument
