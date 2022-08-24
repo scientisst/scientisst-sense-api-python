@@ -1,9 +1,17 @@
 # Installation
 
+## Pip
+
+Simply install it via `pip`:
+
+```sh
+pip install scientisst-sense
+```
+
 ## Clone the Repo
 
 ```sh
-# Getting this repository 
+# Getting this repository
 git clone https://github.com/scientisst/scientisst-sense-api-python.git
 ```
 
