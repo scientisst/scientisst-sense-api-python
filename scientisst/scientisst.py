@@ -487,6 +487,7 @@ class ScientISST:
                     socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM
                 )
                 self.__socket.connect((self.address, 1))
+                self.__socket.settimeout(TIMEOUT_IN_SECONDS)
             else:
                 self.__serial = serial.Serial(
                     self.address, self.serial_speed, timeout=TIMEOUT_IN_SECONDS
@@ -522,8 +523,6 @@ class ScientISST:
 
         else:
             raise InvalidParameterError
-
-        self.__socket.settimeout(TIMEOUT_IN_SECONDS)
 
     def __getPacketSize(self):
         packet_size = 0
