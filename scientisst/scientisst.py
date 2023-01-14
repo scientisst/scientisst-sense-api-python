@@ -251,7 +251,7 @@ class ScientISST:
 
             #  if CRC check failed, try to resynchronize with the next valid frame
             while not self.__checkCRC4(bf, self.__packet_size):
-                sys.stderr.write("Error checking CRC4")
+                sys.stderr.write("Error checking CRC4\n")
                 #  checking with one new byte at a time
                 result_tmp = list(self.__recv(1))
                 if len(result_tmp) != 1:
@@ -265,9 +265,9 @@ class ScientISST:
             frames.append(f)
             if self.__api_mode == API_MODE_SCIENTISST:
                 # Get seq number and IO states
-                f.seq = bf[-1] >> 4
+                f.seq = bf[-2] >> 4 | bf[-1] << 4
                 for i in range(4):
-                    f.digital[i] = 0 if (bf[-2] & (0x80 >> i)) == 0 else 1
+                    f.digital[i] = 0 if (bf[-3] & (0x80 >> i)) == 0 else 1
 
                 # Get channel values
                 byte_it = 0
@@ -551,7 +551,7 @@ class ScientISST:
                     (num_intern_active_chs * 12) - 4
                 ) / 8  # -4 because 4 bits can go in the I/0 byte
             # for the I/Os and seq+crc bytes
-            packet_size += 2
+            packet_size += 3
 
         else:
             raise NotSupportedError()
@@ -575,16 +575,20 @@ class ScientISST:
     def __checkCRC4(self, data, length):
         CRC4tab = [0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2]
         crc = 0
-        for i in range(length - 1):
+        for i in range(length - 2):
             b = data[i]
             crc = CRC4tab[crc] ^ (b >> 4)
             crc = CRC4tab[crc] ^ (b & 0x0F)
 
-        # CRC for last byte
+        # CRC for seq
+        crc = CRC4tab[crc] ^ (data[-2] >> 4)        #First 4 bits
+        #Last 8 bits of seq
         crc = CRC4tab[crc] ^ (data[-1] >> 4)
+        crc = CRC4tab[crc] ^ (data[-1] & 0x0F)
+
         crc = CRC4tab[crc]
 
-        return crc == (data[-1] & 0x0F)
+        return crc == (data[-2] & 0x0F)
 
     def __send(self, command, nrOfBytes=0):
         """
