@@ -120,7 +120,7 @@ python sense.py COMX
 Example usage to acquire AI1 at 10Hz sample rate (Linux):
 
 ```
-python3 sense.py -f 10 -c 1 08:3A:F2:49:AC:D2 -o output.csv
+python3 sense.py -f 10 -c 1 -o output.csv 08:3A:F2:49:AC:D2
 ```
 
 
