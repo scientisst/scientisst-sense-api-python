@@ -28,14 +28,6 @@ class ScientISST:
         serial_speed (int, optional): The serial port bitrate.
     """
 
-    __serial = None
-    __socket = None
-    __num_chs = 0
-    __api_mode = 1
-    __sample_rate = None
-    __chs = [None] * 8
-    __log = False
-
     def __init__(
         self,
         address,
@@ -643,8 +635,12 @@ class ScientISST:
         """
         result = None
         if self.__socket:
+            result = bytearray()
+            remaining = nrOfBytes
             if waitall_flag:
-                result = self.__socket.recv(nrOfBytes, socket.MSG_WAITALL)
+                while remaining > 0:
+                    result.extend(self.__socket.recv(remaining))
+                    remaining = nrOfBytes - len(result)
             else:
                 result = self.__socket.recv(nrOfBytes)
         elif self.__serial:
