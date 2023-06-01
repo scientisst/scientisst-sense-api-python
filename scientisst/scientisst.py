@@ -64,6 +64,13 @@ class ScientISST:
         self.address = address
         self.serial_speed = serial_speed
         self.__log = log
+        #changed this from class attributes to instance attributes so user can change settings within the same script
+        self.serial = None
+        self.socket = None
+        self.num_chs = 0
+        self.api_mode = 1
+        self.sample_rate = None
+        self.chs = [None] * 8
 
         # Setup socket in function of com_mode argument
         self.__setupSocket()
@@ -284,6 +291,9 @@ class ScientISST:
                             & 0xFFFFFF
                         )
                         byte_it += 3
+                        if convert:
+                            f.mv[index] = (f.a[index]) * (3.3*2) / (pow(2, 24) - 1)
+                            f.mv[index] = round(f.mv[index]*1000, 3)
 
                     # If it's an AI channel
                     else:
