@@ -3,6 +3,7 @@ import sys
 
 # if sys.platform == "linux":
 import socket
+import select
 
 # else:
 import serial
@@ -27,6 +28,14 @@ class ScientISST:
 
         serial_speed (int, optional): The serial port bitrate.
     """
+
+    __serial = None
+    __socket = None
+    __num_chs = 0
+    __api_mode = 1
+    __sample_rate = None
+    __chs = [None] * 8
+    __log = False
 
     def __init__(
         self,
@@ -56,13 +65,14 @@ class ScientISST:
         self.address = address
         self.serial_speed = serial_speed
         self.__log = log
-        #changed this from class attributes to instance attributes so user can change settings within the same script
-        self.serial = None
-        self.socket = None
-        self.num_chs = 0
-        self.api_mode = 1
-        self.sample_rate = None
-        self.chs = [None] * 8
+        
+        self.__serial = None
+        self.__socket = None
+        self.__num_chs = 0
+        self.__api_mode = 1
+        self.__sample_rate = None
+        self.__chs = [None] * 8
+        self.__log = False
 
         # Setup socket in function of com_mode argument
         self.__setupSocket()
@@ -284,8 +294,8 @@ class ScientISST:
                         )
                         byte_it += 3
                         if convert:
-                            f.mv[index] = (f.a[index]) * (3.3*2) / (pow(2, 24) - 1)
-                            f.mv[index] = round(f.mv[index]*1000, 3)
+                            f.mv[index] = ((f.a[index]) * (3.3*2) / (pow(2, 24) - 1))*1000
+                            f.mv[index] = round(f.mv[index], 3)
 
                     # If it's an AI channel
                     else:
@@ -633,16 +643,23 @@ class ScientISST:
         """
         Receive data
         """
-        result = None
+        result = b""
         if self.__socket:
-            result = bytearray()
-            remaining = nrOfBytes
-            if waitall_flag:
-                while remaining > 0:
-                    result.extend(self.__socket.recv(remaining))
-                    remaining = nrOfBytes - len(result)
-            else:
-                result = self.__socket.recv(nrOfBytes)
+            # We have to use a select here with a single socket because we can't apply a timeout in any other way
+            ready = select.select([self.__socket], [], [], 5)  # 10 seconds timeout
+            if ready[0]:
+                if waitall_flag:
+                    remaining = nrOfBytes
+                    while remaining > 0:
+                        ready = select.select([self.__socket], [], [], 10)
+                        if not ready[0]:
+                            raise ContactingDeviceError()
+                            break
+                        temp = self.__socket.recv(remaining)
+                        result += temp
+                        remaining = nrOfBytes - len(result)
+                else:
+                    result = self.__socket.recv(nrOfBytes)
         elif self.__serial:
             result = self.__serial.read(nrOfBytes)
         else:
