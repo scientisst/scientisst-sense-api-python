@@ -654,7 +654,6 @@ class ScientISST:
                         ready = select.select([self.__socket], [], [], 10)
                         if not ready[0]:
                             raise ContactingDeviceError()
-                            break
                         temp = self.__socket.recv(remaining)
                         result += temp
                         remaining = nrOfBytes - len(result)
