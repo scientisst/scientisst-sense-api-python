@@ -31,7 +31,7 @@ class Frame:
 
     def __init__(self, num_channels):
         self.a = [0] * num_channels
-        self.mv = [0] * num_channels
+        self.mv = [-1] * num_channels
 
     def to_map(self):
         return {
@@ -42,7 +42,7 @@ class Frame:
         }
 
     def __str__(self):
-        if self.mv[0]:
+        if self.mv[0] != -1:
             values = [str(val) for pair in zip(self.a, self.mv) for val in pair]
         else:
             values = map(str, self.a)
@@ -57,7 +57,7 @@ class Frame:
         )
 
     def to_matrix(self):
-        if self.mv[0]:
+        if self.mv[0] != -1:
             return (
                 [self.seq]
                 + self.digital
