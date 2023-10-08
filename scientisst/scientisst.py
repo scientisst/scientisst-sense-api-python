@@ -504,6 +504,10 @@ class ScientISST:
                 self.__serial = serial.Serial(
                     self.address, self.serial_speed, timeout=TIMEOUT_IN_SECONDS
                 )
+        elif self.com_mode == COM_MODE_SERIAL:
+            self.__serial = serial.Serial(
+                self.address, self.serial_speed, timeout=TIMEOUT_IN_SECONDS
+            )
         elif self.com_mode == COM_MODE_TCP_SERVER:
             if not self.address.isdigit():
                 raise InvalidAddressError()
