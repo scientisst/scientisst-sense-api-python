@@ -1,6 +1,7 @@
 dist/
 **/__pycache__
 .vscode
+.idea
 *.csv
 *.txt
 **/*.pyc

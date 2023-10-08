@@ -15,6 +15,7 @@ from sense_src.device_picker import DevicePicker
 from sense_src.file_writer import *
 
 
+
 def run_scheduled_task(duration, stop_event):
     def stop(stop_event):
         stop_event.set()

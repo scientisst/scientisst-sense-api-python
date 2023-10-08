@@ -106,7 +106,7 @@ class ScientISST:
         if self.__api_mode == API_MODE_BITALINO:
             header = "BITalino"
         else:
-            header = "ScientISST"
+            header = ""
         header_len = len(header)
 
         cmd = b"\x07"
@@ -118,7 +118,7 @@ class ScientISST:
             raise ContactingDeviceError()
 
         index = result.index(b"\x00")
-        version = result[header_len : index - 1].decode("utf-8")
+        version = result[header_len : index].decode("utf-8")
 
         self.__adc1_chars = EspAdcCalChars(result[index + 1 :])
 
