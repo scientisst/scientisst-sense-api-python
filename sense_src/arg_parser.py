@@ -112,6 +112,17 @@ class ArgParser:
             + ". Default: "
             + COM_MODE_BT,
         )
+        self.parser.add_argument(
+            "--api",
+            dest="api",
+            type=str,
+            default="SCIENTISST",
+            help="The API version to use. Currently supported: "
+            + ", ".join(API_MODE_LIST)
+            + ". Default: "
+            + "SCIENTISST",
+        )
+
         self.args = self.parser.parse_args()
 
     def error(self, value):
