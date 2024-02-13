@@ -324,8 +324,9 @@ class ScientISST:
                                 f.a[index]
                             )
             elif self.__api_mode == API_MODE_SCIENTISST_V2:
-                # Get seq number and IO states
-                f.seq = int.from_bytes(bf[-5:-1], byteorder="little") >> 4
+                # Get timestamp (us) and IO states
+                f.seq = (bf[-1] << 28) | (bf[-2] << 20) | (bf[-3] <<
+                                                           12) | (bf[-4] << 4) | ((bf[-5] & 0xF0) >> 4)
                 for i in range(4):
                     f.digital[i] = 0 if (bf[-6] & (0x80 >> i)) == 0 else 1
 
@@ -685,7 +686,7 @@ class ScientISST:
             crc = CRC4tab[crc]
 
             return crc == (data[-5] & 0x0F)
-            
+
         else:
             for i in range(length - 2):
                 b = data[i]
