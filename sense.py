@@ -90,7 +90,7 @@ def main():
         try:
             if args.verbose:
                 header = "\t".join(get_header(
-                    args.channels, args.convert)) + "\n"
+                    args.channels, args.convert, args.api)) + "\n"
                 sys.stdout.write(header)
             while not stop_event.is_set():
                 frames = scientisst.read(convert=args.convert)

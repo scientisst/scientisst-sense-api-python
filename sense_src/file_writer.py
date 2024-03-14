@@ -1,5 +1,6 @@
 import sys
 from scientisst.scientisst import AX1, AX2
+from scientisst.constants import *
 from sense_src.thread_builder import ThreadBuilder
 from datetime import datetime
 
@@ -47,7 +48,7 @@ class FileWriter(ThreadBuilder):
             "Channels labels": get_channel_labels(channels, self.mv),
             "Device": address,
             "Firmware version": firmware_version,
-            "Header": get_header(channels, self.mv),
+            "Header": get_header(channels, self.mv, api_version),
             "Resolution (bits)": [4, 1, 1, 1, 1] + self.__get_channel_resolutions(),
             "Sampling rate (Hz)": fs,
             "Timestamp": timestamp.timestamp(),
@@ -106,7 +107,11 @@ def get_channel_labels(channels, mv):
     return channel_labels
 
 
-def get_header(channels, mv):
-    header = ["NSeq", "I1", "I2", "O1", "O2"]
+def get_header(channels, mv, api_version):
+    header = []
+    if api_version == API_MODE_SCIENTISST_V2:
+        header = ["Timestamp(us)", "I1", "I2", "O1", "O2"]
+    else:
+        header = ["NSeq", "I1", "I2", "O1", "O2"]
     header += get_channel_labels(channels, mv)
     return header
