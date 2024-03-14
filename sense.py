@@ -60,6 +60,7 @@ def main():
                 args.convert,
                 __version__,
                 firmware_version,
+                args.api
             )
         if args.stream:
             from sense_src.stream_lsl import StreamLSL
