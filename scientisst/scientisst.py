@@ -58,6 +58,7 @@ class ScientISST:
             api != API_MODE_SCIENTISST
             and api != API_MODE_JSON
             and api != API_MODE_BITALINO
+            and api != API_MODE_SCIENTISST_V2
         ):
             raise InvalidParameterError()
 
@@ -65,7 +66,7 @@ class ScientISST:
         self.address = address
         self.serial_speed = serial_speed
         self.__log = log
-        
+
         self.__serial = None
         self.__socket = None
         self.__num_chs = 0
@@ -118,9 +119,9 @@ class ScientISST:
             raise ContactingDeviceError()
 
         index = result.index(b"\x00")
-        version = result[header_len : index].decode("utf-8")
+        version = result[header_len: index].decode("utf-8")
 
-        self.__adc1_chars = EspAdcCalChars(result[index + 1 :])
+        self.__adc1_chars = EspAdcCalChars(result[index + 1:])
 
         if print:
             sys.stdout.write("ScientISST version: {}\n".format(version))
@@ -173,7 +174,7 @@ class ScientISST:
             raise DeviceNotIdleError()
 
         if not channels:  # channels is empty
-            chMask = 0xFF  #  all 8 analog channels
+            chMask = 0xFF  # all 8 analog channels
             self.__num_chs = 8
         else:
             chMask = 0
@@ -255,7 +256,7 @@ class ScientISST:
         result = list(self.__recv(self.__bytes_to_read))
         start = 0
         for it in range(self.__num_frames):
-            bf = result[start : start + self.__packet_size]
+            bf = result[start: start + self.__packet_size]
             mid_frame_flag = 0
 
             #  if CRC check failed, try to resynchronize with the next valid frame
@@ -268,7 +269,7 @@ class ScientISST:
 
                 result += result_tmp
                 start += 1
-                bf = result[start : start + self.__packet_size]
+                bf = result[start: start + self.__packet_size]
 
             f = Frame(self.__num_chs)
             frames.append(f)
@@ -288,13 +289,14 @@ class ScientISST:
                     if curr_ch == AX1 or curr_ch == AX2:
                         f.a[index] = (
                             int.from_bytes(
-                                bf[byte_it : byte_it + 4], byteorder="little"
+                                bf[byte_it: byte_it + 4], byteorder="little"
                             )
                             & 0xFFFFFF
                         )
                         byte_it += 3
                         if convert:
-                            f.mv[index] = ((f.a[index]) * (3.3*2) / (pow(2, 24) - 1))*1000
+                            f.mv[index] = (
+                                (f.a[index]) * (3.3*2) / (pow(2, 24) - 1))*1000
                             f.mv[index] = round(f.mv[index], 3)
 
                     # If it's an AI channel
@@ -302,7 +304,7 @@ class ScientISST:
                         if not mid_frame_flag:
                             f.a[index] = (
                                 int.from_bytes(
-                                    bf[byte_it : byte_it + 2], byteorder="little"
+                                    bf[byte_it: byte_it + 2], byteorder="little"
                                 )
                                 & 0xFFF
                             )
@@ -311,7 +313,58 @@ class ScientISST:
                         else:
                             f.a[index] = (
                                 int.from_bytes(
-                                    bf[byte_it : byte_it + 2], byteorder="little"
+                                    bf[byte_it: byte_it + 2], byteorder="little"
+                                )
+                                >> 4
+                            )
+                            byte_it += 2
+                            mid_frame_flag = 0
+                        if convert:
+                            f.mv[index] = self.__adc1_chars.esp_adc_cal_raw_to_voltage(
+                                f.a[index]
+                            )
+            elif self.__api_mode == API_MODE_SCIENTISST_V2:
+                # Get timestamp (us) and IO states
+                f.seq = (bf[-1] << 28) | (bf[-2] << 20) | (bf[-3] <<
+                                                           12) | (bf[-4] << 4) | ((bf[-5] & 0xF0) >> 4)
+                for i in range(4):
+                    f.digital[i] = 0 if (bf[-6] & (0x80 >> i)) == 0 else 1
+
+                # Get channel values
+                byte_it = 0
+                for i in range(self.__num_chs):
+                    index = self.__num_chs - 1 - i
+                    curr_ch = self.__chs[index]
+
+                    # If it's an AX channel
+                    if curr_ch == AX1 or curr_ch == AX2:
+                        f.a[index] = (
+                            int.from_bytes(
+                                bf[byte_it: byte_it + 4], byteorder="little"
+                            )
+                            & 0xFFFFFF
+                        )
+                        byte_it += 3
+                        if convert:
+                            f.mv[index] = (
+                                (f.a[index]) * (3.3*2) / (pow(2, 24) - 1))*1000
+                            f.mv[index] = round(f.mv[index], 3)
+
+                    # If it's an AI channel
+                    else:
+                        if not mid_frame_flag:
+                            f.a[index] = (
+                                int.from_bytes(
+                                    bf[byte_it: byte_it + 2], byteorder="little"
+                                )
+                                & 0xFFF
+                            )
+                            byte_it += 1
+                            mid_frame_flag = 1
+                        else:
+                            f.a[index] = (
+                                int.from_bytes(
+                                    bf[byte_it: byte_it + 2], byteorder="little"
                                 )
                                 >> 4
                             )
@@ -568,7 +621,31 @@ class ScientISST:
                 ) / 8  # -4 because 4 bits can go in the I/0 byte
             # for the I/Os and seq+crc bytes
             packet_size += 3
+        elif self.__api_mode == API_MODE_SCIENTISST_V2:
+            num_intern_active_chs = 0
+            num_extern_active_chs = 0
 
+            for ch in self.__chs:
+                if ch:
+                    # Add 24bit channel's contributuion to packet size
+                    if ch == AX1 or ch == AX2:
+                        num_extern_active_chs += 1
+                    # Count 12bit channels
+                    else:
+                        num_intern_active_chs += 1
+
+            # Add 24bit channel's contributuion to packet size
+            packet_size = 3 * num_extern_active_chs
+
+            # Add 12bit channel's contributuion to packet size
+            if not (num_intern_active_chs % 2):  # If it's an even number
+                packet_size += (num_intern_active_chs * 12) / 8
+            else:
+                packet_size += (
+                    (num_intern_active_chs * 12) - 4
+                ) / 8  # -4 because 4 bits can go in the I/0 byte
+            # for the I/Os and seq+crc bytes
+            packet_size += 6
         else:
             raise NotSupportedError()
 
@@ -578,7 +655,7 @@ class ScientISST:
         if self.__num_chs and self.__num_chs != 0:
             raise DeviceNotIdleError()
 
-        if api <= 0 or api > 3:
+        if api <= 0 or api > 3 and api != 14:
             raise InvalidParameterError()
 
         self.__api_mode = api
@@ -591,20 +668,40 @@ class ScientISST:
     def __checkCRC4(self, data, length):
         CRC4tab = [0, 3, 6, 5, 12, 15, 10, 9, 11, 8, 13, 14, 7, 4, 1, 2]
         crc = 0
-        for i in range(length - 2):
-            b = data[i]
-            crc = CRC4tab[crc] ^ (b >> 4)
-            crc = CRC4tab[crc] ^ (b & 0x0F)
+        if self.__api_mode == API_MODE_SCIENTISST_V2:
+            for i in range(length - 5):
+                b = data[i]
+                crc = CRC4tab[crc] ^ (b >> 4)
+                crc = CRC4tab[crc] ^ (b & 0x0F)
+            crc = CRC4tab[crc] ^ (data[-5] >> 4)  # First 4 bits
+            crc = CRC4tab[crc] ^ (data[-4] >> 4)
+            crc = CRC4tab[crc] ^ (data[-4] & 0x0F)
+            crc = CRC4tab[crc] ^ (data[-3] >> 4)
+            crc = CRC4tab[crc] ^ (data[-3] & 0x0F)
+            crc = CRC4tab[crc] ^ (data[-2] >> 4)
+            crc = CRC4tab[crc] ^ (data[-2] & 0x0F)
+            crc = CRC4tab[crc] ^ (data[-1] >> 4)
+            crc = CRC4tab[crc] ^ (data[-1] & 0x0F)
 
-        # CRC for seq
-        crc = CRC4tab[crc] ^ (data[-2] >> 4)        #First 4 bits
-        #Last 8 bits of seq
-        crc = CRC4tab[crc] ^ (data[-1] >> 4)
-        crc = CRC4tab[crc] ^ (data[-1] & 0x0F)
+            crc = CRC4tab[crc]
 
-        crc = CRC4tab[crc]
+            return crc == (data[-5] & 0x0F)
 
-        return crc == (data[-2] & 0x0F)
+        else:
+            for i in range(length - 2):
+                b = data[i]
+                crc = CRC4tab[crc] ^ (b >> 4)
+                crc = CRC4tab[crc] ^ (b & 0x0F)
+            # CRC for seq
+            crc = CRC4tab[crc] ^ (data[-2] >> 4)  # First 4 bits
+
+            # Last 8 bits of seq
+            crc = CRC4tab[crc] ^ (data[-1] >> 4)
+            crc = CRC4tab[crc] ^ (data[-1] & 0x0F)
+
+            crc = CRC4tab[crc]
+
+            return crc == (data[-2] & 0x0F)
 
     def __send(self, command, nrOfBytes=0):
         """
@@ -650,7 +747,8 @@ class ScientISST:
         result = b""
         if self.__socket:
             # We have to use a select here with a single socket because we can't apply a timeout in any other way
-            ready = select.select([self.__socket], [], [], 5)  # 10 seconds timeout
+            ready = select.select([self.__socket], [],
+                                  [], 5)  # 10 seconds timeout
             if ready[0]:
                 if waitall_flag:
                     remaining = nrOfBytes
@@ -675,7 +773,8 @@ class ScientISST:
                     )
                 )
             else:
-                sys.stdout.write("{} bytes received: {}\n".format(1, result.hex()))
+                sys.stdout.write(
+                    "{} bytes received: {}\n".format(1, result.hex()))
         return result
 
     def __clear(self):

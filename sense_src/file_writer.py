@@ -1,19 +1,20 @@
 import sys
 from scientisst.scientisst import AX1, AX2
+from scientisst.constants import *
 from sense_src.thread_builder import ThreadBuilder
 from datetime import datetime
 
 
 class FileWriter(ThreadBuilder):
     def __init__(
-        self, filename, address, fs, channels, mv, api_version, firmware_version
+        self, filename, address, fs, channels, mv, api_version, firmware_version, api_com_version
     ):
         super().__init__()
         self.filename = filename
         self.mv = mv
         self.channels = channels
         self.metadata = self.__get_metadata(
-            address, fs, channels, api_version, firmware_version
+            address, fs, channels, api_version, firmware_version, api_com_version
         )
 
     def start(self):
@@ -37,9 +38,9 @@ class FileWriter(ThreadBuilder):
         header = "\t".join(self.metadata["Header"])
 
         self.f.write("#{}\n".format(self.metadata))
-        self.f.write("#{}\n".format(header))
+        self.f.write("{}\n".format(header))
 
-    def __get_metadata(self, address, fs, channels, api_version, firmware_version):
+    def __get_metadata(self, address, fs, channels, api_version, firmware_version, api_com_version):
         timestamp = datetime.now()
         metadata = {
             "API version": api_version,
@@ -47,7 +48,7 @@ class FileWriter(ThreadBuilder):
             "Channels labels": get_channel_labels(channels, self.mv),
             "Device": address,
             "Firmware version": firmware_version,
-            "Header": get_header(channels, self.mv),
+            "Header": get_header(channels, self.mv, api_com_version),
             "Resolution (bits)": [4, 1, 1, 1, 1] + self.__get_channel_resolutions(),
             "Sampling rate (Hz)": fs,
             "Timestamp": timestamp.timestamp(),
@@ -106,7 +107,11 @@ def get_channel_labels(channels, mv):
     return channel_labels
 
 
-def get_header(channels, mv):
-    header = ["NSeq", "I1", "I2", "O1", "O2"]
+def get_header(channels, mv, api_version):
+    header = []
+    if API_MODE_DICT[api_version] == API_MODE_SCIENTISST_V2:
+        header = ["Timestamp(us)", "I1", "I2", "O1", "O2"]
+    else:
+        header = ["#NSeq", "I1", "I2", "O1", "O2"]
     header += get_channel_labels(channels, mv)
     return header

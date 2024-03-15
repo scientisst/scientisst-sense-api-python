@@ -15,7 +15,6 @@ from sense_src.device_picker import DevicePicker
 from sense_src.file_writer import *
 
 
-
 def run_scheduled_task(duration, stop_event):
     def stop(stop_event):
         stop_event.set()
@@ -45,7 +44,10 @@ def main():
 
     args.channels = sorted(map(int, args.channels.split(",")))
 
-    scientisst = ScientISST(address, com_mode=args.mode, log=args.log)
+    api_mode = API_MODE_DICT[args.api]
+
+    scientisst = ScientISST(address, com_mode=args.mode,
+                            log=args.log, api=api_mode)
 
     try:
         if args.output:
@@ -58,6 +60,7 @@ def main():
                 args.convert,
                 __version__,
                 firmware_version,
+                args.api
             )
         if args.stream:
             from sense_src.stream_lsl import StreamLSL
@@ -87,7 +90,8 @@ def main():
             timer = run_scheduled_task(args.duration, stop_event)
         try:
             if args.verbose:
-                header = "\t".join(get_header(args.channels, args.convert)) + "\n"
+                header = "\t".join(get_header(
+                    args.channels, args.convert, args.api)) + "\n"
                 sys.stdout.write(header)
             while not stop_event.is_set():
                 frames = scientisst.read(convert=args.convert)
