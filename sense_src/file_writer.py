@@ -42,18 +42,33 @@ class FileWriter(ThreadBuilder):
 
     def __get_metadata(self, address, fs, channels, api_version, firmware_version, api_com_version):
         timestamp = datetime.now()
-        metadata = {
-            "API version": api_version,
-            "Channels": channels,
-            "Channels labels": get_channel_labels(channels, self.mv),
-            "Device": address,
-            "Firmware version": firmware_version,
-            "Header": get_header(channels, self.mv, api_com_version),
-            "Resolution (bits)": [4, 1, 1, 1, 1] + self.__get_channel_resolutions(),
-            "Sampling rate (Hz)": fs,
-            "Timestamp": timestamp.timestamp(),
-            "ISO 8601": timestamp.isoformat(),
-        }
+        metadata = None
+        if API_MODE_DICT[api_com_version] == API_MODE_SCIENTISST_V2:
+            metadata = {
+                "API version": api_version,
+                "Channels": channels,
+                "Channels labels": get_channel_labels(channels, self.mv),
+                "Device": address,
+                "Firmware version": firmware_version,
+                "Header": get_header(channels, self.mv, api_com_version),
+                "Resolution (bits)": [36, 1, 1, 1, 1] + self.__get_channel_resolutions(),
+                "Sampling rate (Hz)": fs,
+                "Timestamp": timestamp.timestamp(),
+                "ISO 8601": timestamp.isoformat(),
+            }
+        else:
+            metadata = {
+                "API version": api_version,
+                "Channels": channels,
+                "Channels labels": get_channel_labels(channels, self.mv),
+                "Device": address,
+                "Firmware version": firmware_version,
+                "Header": get_header(channels, self.mv, api_com_version),
+                "Resolution (bits)": [4, 1, 1, 1, 1] + self.__get_channel_resolutions(),
+                "Sampling rate (Hz)": fs,
+                "Timestamp": timestamp.timestamp(),
+                "ISO 8601": timestamp.isoformat(),
+            }
         if self.mv:
             metadata["Channels indexes raw"] = list(
                 map(lambda x: (x - 1) * 2 + 5, channels)
