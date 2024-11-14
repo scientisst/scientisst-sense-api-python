@@ -3,3 +3,6 @@ pylsl
 dbus-python
 numpy
 matplotlib
+pydbus
+pycairo
+PyGObject

@@ -5,21 +5,21 @@ The ScientISST SENSE Python API.
 
 Learn how to use it, check examples, and much more [here](https://scientisst.github.io/scientisst-sense-api-python/)!
 
-## Dependencies
-
-- PySerial
-
-Install it using `pip`:
-
-```sh
-pip install pyserial
-```
-
 ## Installing
 
 ```sh
 # Getting this repository 
 git clone https://github.com/scientisst/scientisst-sense-api-python.git
+```
+
+## Dependencies
+
+Dependencies are specified in the requirements.txt file.
+
+Install them using `pip`:
+
+```sh
+pip install -r requirements.txt
 ```
 
 ## Running
