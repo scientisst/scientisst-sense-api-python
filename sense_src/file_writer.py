@@ -56,6 +56,19 @@ class FileWriter(ThreadBuilder):
                 "Timestamp": timestamp.timestamp(),
                 "ISO 8601": timestamp.isoformat(),
             }
+        if API_MODE_DICT[api_com_version] == API_MODE_SCIENTISST:
+            metadata = {
+                "API version": api_version,
+                "Channels": channels,
+                "Channels labels": get_channel_labels(channels, self.mv),
+                "Device": address,
+                "Firmware version": firmware_version,
+                "Header": get_header(channels, self.mv, api_com_version),
+                "Resolution (bits)": [12, 1, 1, 1, 1] + self.__get_channel_resolutions(),
+                "Sampling rate (Hz)": fs,
+                "Timestamp": timestamp.timestamp(),
+                "ISO 8601": timestamp.isoformat(),
+            }
         else:
             metadata = {
                 "API version": api_version,

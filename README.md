@@ -22,9 +22,9 @@ Install them using `pip`:
 pip install -r requirements.txt
 ```
 
-## Using Docker
+## Using Docker in Linux
 
-If issues arise when using the API, it is recommended to try using it inside a docker container.
+When running the API on Linux, if issues arise, it is recommended to try using it inside a docker container.
 
 First, install [docker](https://docs.docker.com/engine/install/).
 
