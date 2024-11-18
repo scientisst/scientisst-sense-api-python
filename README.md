@@ -22,6 +22,34 @@ Install them using `pip`:
 pip install -r requirements.txt
 ```
 
+## Using Docker in Linux
+
+When running the API on Linux, if issues arise, it is recommended to try using it inside a docker container.
+
+First, install [docker](https://docs.docker.com/engine/install/).
+
+Then, clone the repository and navigate to the directory:
+```sh
+# Getting this repository 
+git clone https://github.com/scientisst/scientisst-sense-api-python.git
+cd scientisst-sense-api-python
+```
+
+Then, build the docker container with:
+```sh
+sudo docker build -t sense_docker .
+```
+
+It is required to build the container only once. Finally, run the container with:
+```sh
+sudo docker run -v /var/run/dbus/:/var/run/dbus/:z --privileged -it sense_docker
+```
+
+This will open a terminal inside the container with access to bluetooth and Wi-Fi. To exit the container run:
+```sh
+exit
+```
+
 ## Running
 
 ### Automatic
